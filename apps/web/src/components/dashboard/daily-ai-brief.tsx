@@ -1,12 +1,8 @@
 "use client";
 
 import { OPEN_KINLIGHT_AI_EVENT } from "@/components/ai/ai-assistant-modal";
-import {
-  AiRequestSchema,
-  AiResponseSchema,
-  createKinlightClient,
-  type AiDailyBrief,
-} from "@getkinlight.com/shared";
+import { createBrowserApiClient } from "@/lib/api/client";
+import { type AiDailyBrief } from "@getkinlight.com/shared";
 import { ArrowRight, RefreshCw, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import styles from "@/app/(authenticated)/dashboard/dashboard.module.scss";
@@ -20,27 +16,13 @@ function localDate() {
 }
 
 async function fetchBrief(householdId: string, refresh: boolean) {
-  const supabase = createKinlightClient();
-  const { data } = await supabase.auth.getSession();
-  if (!data.session)
-    throw new Error("Your session has expired. Sign in again.");
-
-  const input = AiRequestSchema.parse({
+  const result = await createBrowserApiClient().ai({
     action: "daily-brief",
     householdId,
     date: localDate(),
     refresh,
   });
-  const response = await fetch("/api/ai", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${data.session.access_token}`,
-    },
-    body: JSON.stringify(input),
-  });
-  const result = AiResponseSchema.parse(await response.json());
-  if (!response.ok || !result.ok)
+  if (!result.ok)
     throw new Error(
       result.ok ? "Today's brief is unavailable." : result.message,
     );

@@ -1,16 +1,13 @@
 "use client";
 
 import { CareScheduleList } from "@/components/dashboard/care-schedule-list";
+import { createBrowserApiClient } from "@/lib/api/client";
 import type {
   CareRecipient,
   CareWorkspaceData,
   MedicationReminder,
 } from "@/lib/care";
-import {
-  CareMutationResponseSchema,
-  createKinlightClient,
-  type CareMutationRequest,
-} from "@getkinlight.com/shared";
+import { type CareMutationRequest } from "@getkinlight.com/shared";
 import {
   Activity,
   CalendarClock,
@@ -557,20 +554,8 @@ function EmptyCopy({ text }: { text: string }) {
 }
 
 async function mutateCare(payload: CareMutationRequest) {
-  const supabase = createKinlightClient();
-  const { data } = await supabase.auth.getSession();
-  if (!data.session)
-    throw new Error("Your session has expired. Sign in again.");
-  const response = await fetch("/api/care", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${data.session.access_token}`,
-    },
-    body: JSON.stringify(payload),
-  });
-  const result = CareMutationResponseSchema.parse(await response.json());
-  if (!response.ok || !result.ok) throw new Error(result.message);
+  const result = await createBrowserApiClient().care(payload);
+  if (!result.ok) throw new Error(result.message);
   return result;
 }
 
