@@ -1,11 +1,9 @@
 "use client";
 
 import { CareScheduleList } from "@/components/dashboard/care-schedule-list";
+import { createBrowserApiClient } from "@/lib/api/client";
 import type { CareScheduleItem } from "@/lib/care-schedule";
 import {
-  CreateCareScheduleResponseSchema,
-  UpdateFamilyEventResponseSchema,
-  createKinlightClient,
   type CreateCareScheduleRequest,
   type UpdateFamilyEventRequest,
 } from "@getkinlight.com/shared";
@@ -368,23 +366,9 @@ function EditFamilyEventModal({
     };
 
     try {
-      const supabase = createKinlightClient();
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session)
-        throw new Error("Your session has expired. Sign in again.");
-      const response = await fetch("/api/care-schedule", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionData.session.access_token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      const result = UpdateFamilyEventResponseSchema.parse(
-        await response.json(),
-      );
-      if (!response.ok || !result.ok || !result.item)
-        throw new Error(result.message);
+      const result =
+        await createBrowserApiClient().schedule.updateEvent(payload);
+      if (!result.ok || !result.item) throw new Error(result.message);
       onUpdated(result.item);
     } catch (submitError) {
       setError(
@@ -604,23 +588,8 @@ function ScheduleModal({
               };
 
     try {
-      const supabase = createKinlightClient();
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session)
-        throw new Error("Your session has expired. Sign in again.");
-      const response = await fetch("/api/care-schedule", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionData.session.access_token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      const result = CreateCareScheduleResponseSchema.parse(
-        await response.json(),
-      );
-      if (!response.ok || !result.ok || !result.item)
-        throw new Error(result.message);
+      const result = await createBrowserApiClient().schedule.create(payload);
+      if (!result.ok || !result.item) throw new Error(result.message);
       onCreated(result.item);
     } catch (submitError) {
       setError(
