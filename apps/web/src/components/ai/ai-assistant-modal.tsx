@@ -1,12 +1,8 @@
 "use client";
 
 import { AiWorkspace } from "@/components/ai/ai-workspace";
-import {
-  AiRequestSchema,
-  AiResponseSchema,
-  createKinlightClient,
-  type AiChatMessage,
-} from "@getkinlight.com/shared";
+import { createBrowserApiClient } from "@/lib/api/client";
+import { type AiChatMessage } from "@getkinlight.com/shared";
 import { ArrowUp, MessageCircle, Sparkles, Wrench, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -31,26 +27,12 @@ const welcomeMessage: AiChatMessage = {
 };
 
 async function askKinlight(householdId: string, messages: AiChatMessage[]) {
-  const supabase = createKinlightClient();
-  const { data } = await supabase.auth.getSession();
-  if (!data.session)
-    throw new Error("Your session has expired. Sign in again.");
-
-  const input = AiRequestSchema.parse({
+  const result = await createBrowserApiClient().ai({
     action: "conversation",
     householdId,
     messages,
   });
-  const response = await fetch("/api/ai", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${data.session.access_token}`,
-    },
-    body: JSON.stringify(input),
-  });
-  const result = AiResponseSchema.parse(await response.json());
-  if (!response.ok || !result.ok)
+  if (!result.ok)
     throw new Error(
       result.ok ? "Kinlight AI could not answer." : result.message,
     );

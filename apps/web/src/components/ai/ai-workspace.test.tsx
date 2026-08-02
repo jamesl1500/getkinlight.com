@@ -80,7 +80,7 @@ describe("AiWorkspace", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("More context is needed.")).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledWith(
-      "/api/ai",
+      "/api/v1/ai",
       expect.objectContaining({ method: "POST" }),
     );
   });
@@ -150,7 +150,7 @@ describe("AiWorkspace", () => {
     expect(await screen.findByText("Pat handoff")).toBeInTheDocument();
     expect(screen.getByText("Morning dose complete")).toBeInTheDocument();
     expect(fetch).toHaveBeenLastCalledWith(
-      "/api/ai",
+      "/api/v1/ai",
       expect.objectContaining({ body: expect.stringContaining(recipientId) }),
     );
   });

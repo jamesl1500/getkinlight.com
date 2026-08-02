@@ -6,21 +6,30 @@ export function SiteFooter() {
   const siteName = "Kinlight";
 
   const navColumns = [
-    [
-      { href: "/", label: "Home" },
-      { href: "/features", label: "About" },
-      { href: "/features", label: "Services" },
-    ],
-    [
-      { href: "/pricing", label: "Plans" },
-      { href: "/features", label: "Resources" },
-      { href: "/auth/sign-up", label: "Join Us" },
-    ],
-    [
-      { href: "/auth/sign-in", label: "Sign in" },
-      { href: "/auth/sign-up", label: "Create account" },
-      { href: "/auth/forgot-password", label: "Reset password" },
-    ],
+    {
+      label: "Company",
+      links: [
+        { href: "/", label: "Home" },
+        { href: "/features", label: "About" },
+        { href: "/features", label: "Services" },
+      ],
+    },
+    {
+      label: "Resources",
+      links: [
+        { href: "/pricing", label: "Plans" },
+        { href: "/features", label: "Resources" },
+        { href: "/auth/sign-up", label: "Join Us" },
+      ],
+    },
+    {
+      label: "Account",
+      links: [
+        { href: "/auth/sign-in", label: "Sign in" },
+        { href: "/auth/sign-up", label: "Create account" },
+        { href: "/auth/forgot-password", label: "Reset password" },
+      ],
+    },
   ];
 
   return (
@@ -29,9 +38,13 @@ export function SiteFooter() {
         <div className={styles.content}>
           <div className={styles.topRow}>
             <div className={styles.navColumns}>
-              {navColumns.map((column, index) => (
-                <nav key={index} className={styles.navColumn}>
-                  {column.map((item) => (
+              {navColumns.map((column) => (
+                <nav
+                  key={column.label}
+                  className={styles.navColumn}
+                  aria-label={`${column.label} links`}
+                >
+                  {column.links.map((item) => (
                     <Link
                       key={item.label}
                       href={item.href}

@@ -1,8 +1,8 @@
 "use client";
 
+import { createBrowserApiClient } from "@/lib/api/client";
 import {
   OnboardingRequestSchema,
-  OnboardingResponseSchema,
   createKinlightClient,
 } from "@getkinlight.com/shared";
 import type { OnboardingRole } from "@getkinlight.com/shared";
@@ -85,17 +85,9 @@ export function OnboardingFlow({ redirectTo }: { redirectTo: string }) {
         setAccessToken(bearer);
         setEmail(userData.user?.email ?? "");
 
-        const response = await fetch("/api/onboarding", {
-          headers: {
-            Authorization: `Bearer ${bearer}`,
-          },
-        });
+        const responseData = await createBrowserApiClient().onboarding.get();
 
-        const responseData = OnboardingResponseSchema.parse(
-          await response.json(),
-        );
-
-        if (response.ok && responseData.profile) {
+        if (responseData.profile) {
           setFirstName(responseData.profile.first_name ?? "");
           setLastName(responseData.profile.last_name ?? "");
           setUsername(responseData.profile.username ?? "");
@@ -155,19 +147,14 @@ export function OnboardingFlow({ redirectTo }: { redirectTo: string }) {
         );
       }
 
-      const response = await fetch("/api/onboarding", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payloadResult.data),
+      const responseData = await createBrowserApiClient().onboarding.save({
+        firstName: payloadResult.data.firstName,
+        lastName: payloadResult.data.lastName,
+        username: payloadResult.data.username,
+        role: payloadResult.data.role,
       });
 
-      const responseData = OnboardingResponseSchema.parse(
-        await response.json(),
-      );
-
-      if (!response.ok || !responseData.ok) {
+      if (!responseData.ok) {
         throw new Error(responseData.message);
       }
 

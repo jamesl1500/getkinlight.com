@@ -14,5 +14,6 @@ export * from "./schemas/family";
 export * from "./schemas/ai";
 export * from "./schemas/notifications";
 export * from "./schemas/conversations";
+export * from "./api/client";
 export * from "./supabase/client";
 export * from "./supabase/server";

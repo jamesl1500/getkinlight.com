@@ -6,7 +6,14 @@
   "scripts": {
     "web": "pnpm --filter @getkinlight.com/web dev",
     "mobile": "pnpm --filter @getkinlight.com/mobile start",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r --if-present lint",
+    "format:check": "pnpm --filter @getkinlight.com/web format:check",
+    "test": "pnpm --filter @getkinlight.com/web test",
+    "test:coverage": "pnpm --filter @getkinlight.com/web test:coverage",
+    "test:e2e": "pnpm --filter @getkinlight.com/web test:e2e",
+    "build": "pnpm --filter @getkinlight.com/web build",
+    "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build && pnpm test:e2e"
   },
   "keywords": [],
   "author": "",
