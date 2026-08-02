@@ -1,11 +1,9 @@
 "use client";
 
+import { createBrowserApiClient } from "@/lib/api/client";
 import {
   AiRequestSchema,
-  AiResponseSchema,
   CreateCareScheduleRequestSchema,
-  CreateCareScheduleResponseSchema,
-  createKinlightClient,
   type AiDailyBrief,
   type AiDocumentExtraction,
   type AiHandoff,
@@ -42,26 +40,9 @@ type SpeechRecognitionLike = {
   onerror: () => void;
 };
 
-async function accessToken() {
-  const supabase = createKinlightClient();
-  const { data } = await supabase.auth.getSession();
-  if (!data.session)
-    throw new Error("Your session has expired. Sign in again.");
-  return data.session.access_token;
-}
-
 async function askKinlight(input: AiRequest) {
-  const parsed = AiRequestSchema.parse(input);
-  const response = await fetch("/api/ai", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${await accessToken()}`,
-    },
-    body: JSON.stringify(parsed),
-  });
-  const result = AiResponseSchema.parse(await response.json());
-  if (!response.ok || !result.ok)
+  const result = await createBrowserApiClient().ai(input);
+  if (!result.ok)
     throw new Error(
       result.ok
         ? "Kinlight AI could not complete the request."
@@ -111,16 +92,10 @@ function scheduleRequest(
 }
 
 async function saveSchedule(proposal: AiScheduleProposal) {
-  const response = await fetch("/api/care-schedule", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${await accessToken()}`,
-    },
-    body: JSON.stringify(scheduleRequest(proposal)),
-  });
-  const result = CreateCareScheduleResponseSchema.parse(await response.json());
-  if (!response.ok || !result.ok) throw new Error(result.message);
+  const result = await createBrowserApiClient().schedule.create(
+    scheduleRequest(proposal),
+  );
+  if (!result.ok) throw new Error(result.message);
   return result.message;
 }
 

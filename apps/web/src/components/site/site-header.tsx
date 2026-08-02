@@ -30,7 +30,10 @@ export function SiteHeader() {
                 Kinlight
               </Link>
             </div>
-            <nav className={`${styles.desktopNav} hidden md:flex`}>
+            <nav
+              className={`${styles.desktopNav} hidden md:flex`}
+              aria-label="Primary navigation"
+            >
               <ul>
                 {links.map((link) => (
                   <li key={link.href}>
@@ -55,7 +58,10 @@ export function SiteHeader() {
             </div>
           </div>
 
-          <nav className={`${styles.mobileNav} flex md:hidden`}>
+          <nav
+            className={`${styles.mobileNav} flex md:hidden`}
+            aria-label="Mobile navigation"
+          >
             {links.map((link) => (
               <Link
                 key={link.href}

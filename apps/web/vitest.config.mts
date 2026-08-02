@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
@@ -11,11 +11,12 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
+    exclude: [...configDefaults.exclude, "e2e/**"],
     coverage: {
       provider: "v8",
       include: [
         "src/lib/**/*.ts",
-        "src/app/api/ai/route.ts",
+        "src/app/api/**/route.ts",
         "src/components/ai/**/*.tsx",
         "src/components/dashboard/daily-ai-brief.tsx",
       ],

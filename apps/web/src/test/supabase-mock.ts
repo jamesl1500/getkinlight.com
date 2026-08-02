@@ -2,6 +2,10 @@ export type QueryResult = { data: unknown; error: unknown };
 
 type QueryBuilder = {
   select: (...args: unknown[]) => QueryBuilder;
+  insert: (...args: unknown[]) => QueryBuilder;
+  update: (...args: unknown[]) => QueryBuilder;
+  delete: (...args: unknown[]) => QueryBuilder;
+  upsert: (...args: unknown[]) => QueryBuilder;
   eq: (...args: unknown[]) => QueryBuilder;
   neq: (...args: unknown[]) => QueryBuilder;
   gte: (...args: unknown[]) => QueryBuilder;
@@ -33,6 +37,10 @@ export function createSupabaseMock(
     const builder = {} as QueryBuilder;
     for (const method of [
       "select",
+      "insert",
+      "update",
+      "delete",
+      "upsert",
       "eq",
       "neq",
       "gte",

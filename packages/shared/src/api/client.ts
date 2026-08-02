@@ -1,0 +1,240 @@
+import { z, type ZodType } from "zod";
+import { AiRequestSchema, AiResponseSchema, type AiRequest, type AiResponse } from "../schemas/ai";
+import { AuthRequestSchema, AuthResponseSchema, type AuthRequest, type AuthResponse } from "../schemas/auth";
+import {
+  CreateCareScheduleRequestSchema,
+  CreateCareScheduleResponseSchema,
+  UpdateFamilyEventRequestSchema,
+  UpdateFamilyEventResponseSchema,
+  type CreateCareScheduleRequest,
+  type CreateCareScheduleResponse,
+  type UpdateFamilyEventRequest,
+  type UpdateFamilyEventResponse,
+} from "../schemas/care-schedule";
+import {
+  CareMutationRequestSchema,
+  CareMutationResponseSchema,
+  type CareMutationRequest,
+  type CareMutationResponse,
+} from "../schemas/care";
+import {
+  FamilyMutationRequestSchema,
+  FamilyMutationResponseSchema,
+  type FamilyMutationRequest,
+  type FamilyMutationResponse,
+} from "../schemas/family";
+import {
+  OnboardingRequestSchema,
+  OnboardingResponseSchema,
+  type OnboardingRequest,
+  type OnboardingResponse,
+} from "../schemas/onboarding";
+
+export const KINLIGHT_API_VERSION = "v1" as const;
+
+export const KinlightApiErrorCodeSchema = z.enum([
+  "AUTH_REQUIRED",
+  "FORBIDDEN",
+  "VALIDATION_ERROR",
+  "CONFLICT",
+  "PAYLOAD_TOO_LARGE",
+  "RATE_LIMITED",
+  "SERVICE_UNAVAILABLE",
+  "INTERNAL_ERROR",
+  "NETWORK_ERROR",
+  "INVALID_RESPONSE",
+]);
+
+export type KinlightApiErrorCode = z.infer<typeof KinlightApiErrorCodeSchema>;
+
+const VersionedErrorSchema = z
+  .object({
+    ok: z.literal(false),
+    message: z.string(),
+    code: KinlightApiErrorCodeSchema,
+    requestId: z.string().optional(),
+  })
+  .passthrough();
+
+export class KinlightApiError extends Error {
+  constructor(
+    message: string,
+    readonly code: KinlightApiErrorCode,
+    readonly status: number,
+    readonly requestId?: string,
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = "KinlightApiError";
+  }
+}
+
+export type KinlightApiClientOptions = {
+  baseUrl?: string;
+  getAccessToken?: () => Promise<string | null> | string | null;
+  fetch?: typeof globalThis.fetch;
+};
+
+type RequestOptions<Input, Output> = {
+  path: string;
+  method: "GET" | "POST" | "PATCH";
+  input?: Input;
+  inputSchema?: ZodType<Input>;
+  outputSchema: ZodType<Output>;
+  accessToken?: string | null;
+  requiresAuth?: boolean;
+};
+
+function errorCodeForStatus(status: number): KinlightApiErrorCode {
+  if (status === 401) return "AUTH_REQUIRED";
+  if (status === 403) return "FORBIDDEN";
+  if (status === 409) return "CONFLICT";
+  if (status === 413) return "PAYLOAD_TOO_LARGE";
+  if (status === 429) return "RATE_LIMITED";
+  if (status === 503) return "SERVICE_UNAVAILABLE";
+  if (status >= 500) return "INTERNAL_ERROR";
+  return "VALIDATION_ERROR";
+}
+
+export function createKinlightApiClient(options: KinlightApiClientOptions = {}) {
+  const baseUrl = options.baseUrl?.replace(/\/$/, "") ?? "";
+  const fetchImpl = options.fetch ?? globalThis.fetch;
+
+  async function request<Input, Output>({
+    path,
+    method,
+    input,
+    inputSchema,
+    outputSchema,
+    accessToken,
+    requiresAuth = true,
+  }: RequestOptions<Input, Output>): Promise<Output> {
+    const token = accessToken ?? (await options.getAccessToken?.()) ?? null;
+    if (requiresAuth && !token) {
+      throw new KinlightApiError(
+        "Your session has expired. Sign in again.",
+        "AUTH_REQUIRED",
+        401,
+      );
+    }
+
+    const body = inputSchema && input !== undefined ? inputSchema.parse(input) : input;
+    let response: Response;
+    try {
+      response = await fetchImpl(`${baseUrl}/api/${KINLIGHT_API_VERSION}/${path}`, {
+        method,
+        headers: {
+          Accept: "application/json",
+          ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      });
+    } catch (cause) {
+      throw new KinlightApiError(
+        "Unable to reach Kinlight. Check your connection and try again.",
+        "NETWORK_ERROR",
+        0,
+        undefined,
+        { cause },
+      );
+    }
+
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch (cause) {
+      throw new KinlightApiError(
+        "Kinlight returned an unreadable response.",
+        "INVALID_RESPONSE",
+        response.status,
+        response.headers.get("x-request-id") ?? undefined,
+        { cause },
+      );
+    }
+
+    if (!response.ok) {
+      const parsed = VersionedErrorSchema.safeParse(payload);
+      const fallback = payload as { message?: unknown };
+      throw new KinlightApiError(
+        parsed.success
+          ? parsed.data.message
+          : typeof fallback?.message === "string"
+            ? fallback.message
+            : "Kinlight could not complete that request.",
+        parsed.success ? parsed.data.code : errorCodeForStatus(response.status),
+        response.status,
+        parsed.success
+          ? parsed.data.requestId
+          : (response.headers.get("x-request-id") ?? undefined),
+      );
+    }
+
+    const parsed = outputSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new KinlightApiError(
+        "Kinlight returned an unexpected response.",
+        "INVALID_RESPONSE",
+        response.status,
+        response.headers.get("x-request-id") ?? undefined,
+        { cause: parsed.error },
+      );
+    }
+    return parsed.data;
+  }
+
+  return {
+    auth(input: AuthRequest): Promise<AuthResponse> {
+      return request({
+        path: "auth",
+        method: "POST",
+        input,
+        inputSchema: AuthRequestSchema,
+        outputSchema: AuthResponseSchema,
+        requiresAuth: false,
+      });
+    },
+    onboarding: {
+      get(): Promise<OnboardingResponse> {
+        return request({ path: "onboarding", method: "GET", outputSchema: OnboardingResponseSchema });
+      },
+      async save(input: Omit<OnboardingRequest, "accessToken">): Promise<OnboardingResponse> {
+        const accessToken = (await options.getAccessToken?.()) ?? null;
+        if (!accessToken) {
+          throw new KinlightApiError(
+            "Your session has expired. Sign in again.",
+            "AUTH_REQUIRED",
+            401,
+          );
+        }
+        return request({
+          path: "onboarding",
+          method: "POST",
+          input: { ...input, accessToken },
+          inputSchema: OnboardingRequestSchema,
+          outputSchema: OnboardingResponseSchema,
+          accessToken,
+        });
+      },
+    },
+    care(input: CareMutationRequest): Promise<CareMutationResponse> {
+      return request({ path: "care", method: "POST", input, inputSchema: CareMutationRequestSchema, outputSchema: CareMutationResponseSchema });
+    },
+    family(input: FamilyMutationRequest): Promise<FamilyMutationResponse> {
+      return request({ path: "family", method: "POST", input, inputSchema: FamilyMutationRequestSchema, outputSchema: FamilyMutationResponseSchema });
+    },
+    schedule: {
+      create(input: CreateCareScheduleRequest): Promise<CreateCareScheduleResponse> {
+        return request({ path: "care-schedule", method: "POST", input, inputSchema: CreateCareScheduleRequestSchema, outputSchema: CreateCareScheduleResponseSchema });
+      },
+      updateEvent(input: UpdateFamilyEventRequest): Promise<UpdateFamilyEventResponse> {
+        return request({ path: "care-schedule", method: "PATCH", input, inputSchema: UpdateFamilyEventRequestSchema, outputSchema: UpdateFamilyEventResponseSchema });
+      },
+    },
+    ai(input: AiRequest): Promise<AiResponse> {
+      return request({ path: "ai", method: "POST", input, inputSchema: AiRequestSchema, outputSchema: AiResponseSchema });
+    },
+  };
+}
+
+export type KinlightApiClient = ReturnType<typeof createKinlightApiClient>;

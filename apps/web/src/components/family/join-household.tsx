@@ -1,9 +1,7 @@
 "use client";
 
-import {
-  FamilyMutationResponseSchema,
-  createKinlightClient,
-} from "@getkinlight.com/shared";
+import { createBrowserApiClient } from "@/lib/api/client";
+import { createKinlightClient } from "@getkinlight.com/shared";
 import { ArrowRight, Check, House, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -33,16 +31,11 @@ export function JoinHousehold({
     }
 
     try {
-      const response = await fetch("/api/family", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${data.session.access_token}`,
-        },
-        body: JSON.stringify({ action: "accept-invitation", invitationToken }),
+      const result = await createBrowserApiClient().family({
+        action: "accept-invitation",
+        invitationToken,
       });
-      const result = FamilyMutationResponseSchema.parse(await response.json());
-      if (!response.ok || !result.ok) throw new Error(result.message);
+      if (!result.ok) throw new Error(result.message);
       setHasJoined(true);
       router.refresh();
     } catch (reason) {

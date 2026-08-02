@@ -1,8 +1,8 @@
 "use client";
 
+import { createBrowserApiClient } from "@/lib/api/client";
 import {
   AuthRequestSchema,
-  AuthResponseSchema,
   createKinlightClient,
 } from "@getkinlight.com/shared";
 import type { AuthMode } from "@getkinlight.com/shared";
@@ -117,17 +117,11 @@ export function AuthForm({
         throw new Error("Please check the form values and try again.");
       }
 
-      const response = await fetch("/api/auth", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestResult.data),
-      });
+      const responseData = await createBrowserApiClient().auth(
+        requestResult.data,
+      );
 
-      const responseData = AuthResponseSchema.parse(await response.json());
-
-      if (!response.ok || !responseData.ok) {
+      if (!responseData.ok) {
         throw new Error(responseData.message);
       }
 

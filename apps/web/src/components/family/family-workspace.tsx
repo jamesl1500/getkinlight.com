@@ -1,5 +1,6 @@
 "use client";
 
+import { createBrowserApiClient } from "@/lib/api/client";
 import type { CareRecipient } from "@/lib/care";
 import type {
   FamilyMember,
@@ -7,9 +8,6 @@ import type {
   HouseholdRole,
 } from "@/lib/family";
 import {
-  CareMutationResponseSchema,
-  FamilyMutationResponseSchema,
-  createKinlightClient,
   type CareMutationRequest,
   type FamilyMutationRequest,
 } from "@getkinlight.com/shared";
@@ -567,38 +565,14 @@ export function FamilyWorkspace({ data }: { data: FamilyWorkspaceData }) {
 }
 
 async function mutateFamily(payload: FamilyMutationRequest) {
-  const supabase = createKinlightClient();
-  const { data } = await supabase.auth.getSession();
-  if (!data.session)
-    throw new Error("Your session has expired. Sign in again.");
-  const response = await fetch("/api/family", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${data.session.access_token}`,
-    },
-    body: JSON.stringify(payload),
-  });
-  const result = FamilyMutationResponseSchema.parse(await response.json());
-  if (!response.ok || !result.ok) throw new Error(result.message);
+  const result = await createBrowserApiClient().family(payload);
+  if (!result.ok) throw new Error(result.message);
   return result;
 }
 
 async function mutateCare(payload: CareMutationRequest) {
-  const supabase = createKinlightClient();
-  const { data } = await supabase.auth.getSession();
-  if (!data.session)
-    throw new Error("Your session has expired. Sign in again.");
-  const response = await fetch("/api/care", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${data.session.access_token}`,
-    },
-    body: JSON.stringify(payload),
-  });
-  const result = CareMutationResponseSchema.parse(await response.json());
-  if (!response.ok || !result.ok) throw new Error(result.message);
+  const result = await createBrowserApiClient().care(payload);
+  if (!result.ok) throw new Error(result.message);
   return result;
 }
 
