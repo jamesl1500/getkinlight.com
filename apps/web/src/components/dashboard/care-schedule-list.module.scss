@@ -1,0 +1,168 @@
+.scheduleList {
+  list-style: none;
+  display: grid;
+  margin: 1.15rem 0 0;
+  padding: 0;
+}
+
+.scheduleItem {
+  display: grid;
+  grid-template-columns: 5.2rem 1.25rem minmax(0, 1fr);
+  gap: 0.65rem;
+  min-height: 4.85rem;
+}
+
+.time {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding-top: 0.25rem;
+  color: #557084;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.marker {
+  position: relative;
+  z-index: 0;
+  color: #277c79;
+}
+
+.marker::after {
+  position: absolute;
+  z-index: -1;
+  top: 1rem;
+  bottom: -3.85rem;
+  left: 0.46rem;
+  width: 1px;
+  content: "";
+  background: rgba(68, 119, 126, 0.22);
+}
+
+.scheduleItem:last-child .marker::after {
+  display: none;
+}
+
+.scheduleItem[data-kind="appointment"] .marker {
+  color: #c66c4d;
+}
+.scheduleItem[data-kind="medication"] .marker {
+  color: #3e6fa2;
+}
+.scheduleItem[data-kind="meal"] .marker {
+  color: #947230;
+}
+
+.itemCopy {
+  min-width: 0;
+  padding: 0 0 1rem;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+}
+
+.itemCopy:not(:disabled) {
+  cursor: pointer;
+  position: relative;
+  top: -10px;
+}
+.itemCopy:not(:disabled):hover h3 {
+  color: #0b6b69;
+}
+.itemCopy:not(:disabled):focus-visible {
+  border-radius: 4px;
+  outline: 2px solid rgba(23, 111, 110, 0.42);
+  outline-offset: 3px;
+}
+
+.itemHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.itemHeading h3 {
+  overflow-wrap: anywhere;
+  margin: 0;
+  color: #1b4055;
+  font-size: 0.88rem;
+}
+
+.itemHeading span {
+  flex: 0 0 auto;
+  padding: 0.24rem 0.42rem;
+  border-radius: 4px;
+  color: #526f80;
+  background: rgba(255, 255, 255, 0.55);
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.itemCopy p,
+.emptyState p {
+  margin: 0;
+  color: #61798b;
+}
+
+.itemCopy p {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.38rem;
+  font-size: 0.7rem;
+  text-transform: capitalize;
+}
+
+.emptyState {
+  min-height: 16rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.emptyIcon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  color: #557f80;
+  background: rgba(255, 255, 255, 0.56);
+  box-shadow: inset 0 1px 0 white;
+}
+
+.emptyState h3 {
+  margin: 1rem 0 0;
+  color: #284a5e;
+  font-size: 0.95rem;
+}
+
+.emptyState p {
+  max-width: 22rem;
+  margin-top: 0.45rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 520px) {
+  .scheduleItem {
+    grid-template-columns: 4.5rem 1.1rem minmax(0, 1fr);
+    gap: 0.45rem;
+  }
+
+  .itemHeading {
+    display: grid;
+  }
+
+  .itemHeading span {
+    width: fit-content;
+  }
+}

@@ -1,0 +1,240 @@
+.glass-card {
+  background: var(--glass);
+  border: 1px solid var(--line);
+  box-shadow:
+    0 10px 24px rgba(12, 44, 78, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(22px);
+}
+
+.glass-strong {
+  background: var(--glass-strong);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(28px);
+}
+
+.shell-glow {
+  position: absolute;
+  inset-inline: 0;
+  top: -2.5rem;
+  height: 8rem;
+  pointer-events: none;
+  filter: blur(24px);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+}
+
+.hero-panel,
+.section-panel,
+.cta-panel {
+  border-radius: 1.5rem;
+}
+
+.hero-panel {
+  position: relative;
+  overflow: hidden;
+  padding: 2.5rem 1.25rem;
+}
+
+.section-panel {
+  padding: 2rem 1.25rem;
+}
+
+.cta-panel {
+  padding: 2rem 1.25rem;
+}
+
+.content-card,
+.feature-card,
+.plan-card {
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.feature-card,
+.plan-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.feature-grid,
+.plan-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.hero-copy {
+  max-width: 48rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.hero-pill {
+  display: inline-block;
+  width: fit-content;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 0.25rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.hero-title,
+.section-title,
+.card-title,
+.price-value {
+  font-family: var(--font-headline), Georgia, serif;
+  color: var(--ink);
+}
+
+.hero-title,
+.section-title {
+  line-height: 1.05;
+}
+
+.hero-title {
+  font-size: clamp(2.25rem, 4vw, 4rem);
+}
+
+.section-title {
+  font-size: clamp(1.75rem, 2.5vw, 2.5rem);
+}
+
+.section-copy {
+  max-width: 42rem;
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
+.hero-actions,
+.cta-actions,
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.button-primary,
+.button-secondary,
+.button-subtle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition:
+    background-color 150ms ease,
+    opacity 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.button-primary {
+  background: var(--ink);
+  color: #fff;
+}
+
+.button-primary:hover {
+  opacity: 0.9;
+}
+
+.button-secondary {
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.65);
+  color: var(--ink);
+}
+
+.button-secondary:hover {
+  background: #fff;
+}
+
+.button-subtle {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ink);
+  box-shadow: 0 2px 6px rgba(16, 35, 61, 0.06);
+}
+
+.button-subtle:hover {
+  background: #fff;
+}
+
+.card-title {
+  font-size: 1.5rem;
+}
+
+.card-copy {
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
+.page-section {
+  background: var(--glass);
+  border: 1px solid var(--line);
+  box-shadow:
+    0 10px 24px rgba(12, 44, 78, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(22px);
+}
+
+@media (min-width: 768px) {
+  .hero-panel {
+    padding: 3.5rem 3.5rem;
+  }
+
+  .section-panel,
+  .cta-panel {
+    padding: 2.5rem 2.5rem;
+  }
+
+  .content-card,
+  .feature-card,
+  .plan-card {
+    padding: 1.75rem;
+  }
+
+  .feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plan-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.icon-accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background:
+    radial-gradient(
+      circle at 30% 30%,
+      rgba(255, 255, 255, 0.95),
+      rgba(255, 255, 255, 0.55) 52%
+    ),
+    linear-gradient(
+      140deg,
+      rgba(255, 182, 148, 0.32),
+      rgba(155, 229, 221, 0.28)
+    );
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow:
+    0 8px 18px rgba(16, 35, 61, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}

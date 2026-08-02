@@ -1,0 +1,15 @@
+{
+  "name": "getkinlight.com",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "web": "pnpm --filter @getkinlight.com/web dev",
+    "mobile": "pnpm --filter @getkinlight.com/mobile start",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.18.2"
+}

@@ -1,0 +1,248 @@
+.trigger {
+  position: fixed;
+  z-index: 45;
+  top: 1.5rem;
+  right: 2rem;
+  width: 2.55rem;
+  height: 2.55rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  border-radius: 50%;
+  color: #31566b;
+  background: rgba(250, 253, 253, 0.72);
+  box-shadow:
+    0 8px 24px rgba(25, 72, 88, 0.1),
+    inset 0 1px 0 white;
+  backdrop-filter: blur(18px);
+  cursor: pointer;
+}
+
+.trigger:hover {
+  color: #0b6261;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.trigger:focus-visible,
+.closeButton:focus-visible,
+.actionButton:focus-visible,
+.activity:focus-visible,
+.permissionBanner button:focus-visible {
+  outline: 2px solid rgba(11, 98, 97, 0.55);
+  outline-offset: 2px;
+}
+
+.badge {
+  position: absolute;
+  top: -0.22rem;
+  right: -0.3rem;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding-inline: 0.25rem;
+  display: grid;
+  place-items: center;
+  border: 2px solid #f4fafa;
+  border-radius: 1rem;
+  color: white;
+  background: #c55345;
+  font-size: 0.6rem;
+  font-weight: 800;
+}
+
+.backdrop {
+  position: fixed;
+  z-index: 190;
+  inset: 0;
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  justify-content: flex-end;
+  padding: 4.75rem 1.5rem 1.5rem;
+  background: rgba(20, 42, 55, 0.2);
+  backdrop-filter: blur(4px);
+}
+
+.panel {
+  width: min(25rem, 100%);
+  max-height: min(42rem, calc(100dvh - 6.25rem));
+  align-self: flex-start;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  color: #18384d;
+  background: rgba(248, 252, 251, 0.96);
+  box-shadow:
+    0 24px 70px rgba(17, 53, 69, 0.24),
+    inset 0 1px 0 white;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1rem 0.9rem;
+  border-bottom: 1px solid rgba(61, 105, 119, 0.12);
+}
+
+.header h2,
+.eyebrow {
+  margin: 0;
+}
+
+.header h2 {
+  font-family: var(--font-headline), Georgia, serif;
+  font-size: 1.35rem;
+}
+
+.eyebrow {
+  color: #6d8391;
+  font-size: 0.64rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.actionButton,
+.closeButton {
+  border: 0;
+  color: #557084;
+  background: transparent;
+  cursor: pointer;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.closeButton {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.permissionBanner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.75rem 0.75rem 0;
+  padding: 0.7rem;
+  border: 1px solid rgba(22, 111, 110, 0.16);
+  border-radius: 7px;
+  color: #31566b;
+  background: rgba(211, 239, 234, 0.46);
+  font-size: 0.72rem;
+}
+
+.permissionBanner button {
+  border: 0;
+  border-radius: 5px;
+  padding: 0.4rem 0.55rem;
+  color: white;
+  background: #146f70;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.activityList {
+  overflow-y: auto;
+  padding: 0.6rem;
+}
+
+.activity {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.7rem;
+  padding: 0.75rem;
+  border: 0;
+  border-bottom: 1px solid rgba(61, 105, 119, 0.1);
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.activity:hover {
+  background: rgba(225, 241, 239, 0.45);
+}
+
+.activityDot {
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-top: 0.4rem;
+  border-radius: 50%;
+  background: #b9c8ce;
+}
+
+.unread .activityDot {
+  background: #14817e;
+  box-shadow: 0 0 0 3px rgba(20, 129, 126, 0.12);
+}
+
+.activityCopy {
+  min-width: 0;
+  display: grid;
+  gap: 0.22rem;
+}
+
+.activityCopy strong {
+  font-size: 0.8rem;
+}
+
+.activityCopy span {
+  overflow-wrap: anywhere;
+  color: #567181;
+  font-size: 0.73rem;
+  line-height: 1.4;
+}
+
+.activityCopy time {
+  color: #82939e;
+  font-size: 0.64rem;
+}
+
+.empty {
+  margin: 0;
+  padding: 2.5rem 1rem;
+  color: #718596;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+@media (max-width: 800px) {
+  .trigger {
+    top: 0.85rem;
+    right: 4.1rem;
+  }
+
+  .backdrop {
+    align-items: flex-start;
+    padding: 4.25rem 0.75rem 5.5rem;
+  }
+
+  .panel {
+    width: 100%;
+    max-height: calc(100dvh - 10.5rem);
+  }
+}

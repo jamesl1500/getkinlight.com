@@ -1,0 +1,87 @@
+.joinPage {
+  min-height: calc(100vh - 8rem);
+  display: grid;
+  place-items: center;
+  color: #17394c;
+}
+.joinPanel {
+  width: min(100%, 34rem);
+  display: grid;
+  justify-items: center;
+  padding: clamp(1.5rem, 5vw, 3rem);
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 24px 60px rgba(25, 69, 84, 0.09),
+    inset 0 1px 0 #fff;
+  text-align: center;
+  backdrop-filter: blur(22px);
+}
+.icon {
+  display: grid;
+  place-items: center;
+  width: 3.7rem;
+  height: 3.7rem;
+  border-radius: 8px;
+  color: #176f6e;
+  background: #ddf3ef;
+}
+.eyebrow {
+  margin: 1.2rem 0 0.35rem;
+  color: #187170;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.joinPanel h1 {
+  margin: 0;
+  color: #15384e;
+  font-family: var(--font-headline), Georgia, serif;
+  font-size: clamp(1.75rem, 5vw, 2.45rem);
+  font-weight: 620;
+  letter-spacing: 0;
+}
+.copy {
+  max-width: 27rem;
+  margin: 0.7rem 0 1.2rem;
+  color: #657d8b;
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+.joinPanel button,
+.joinPanel > a {
+  min-height: 2.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid #176f6e;
+  border-radius: 6px;
+  padding: 0.65rem 1rem;
+  color: #fff;
+  background: #176f6e;
+  font: inherit;
+  font-size: 0.77rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+.joinPanel button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.joinPanel aside {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 1.3rem;
+  color: #718792;
+  font-size: 0.65rem;
+  line-height: 1.45;
+}
+.error {
+  margin: 0 0 0.8rem;
+  color: #a43d48;
+  font-size: 0.73rem;
+}

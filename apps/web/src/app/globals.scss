@@ -1,0 +1,10 @@
+@use "../styles/tokens";
+@use "../styles/base";
+@use "../styles/pages/marketing/index";
+
+@import url("tailwindcss");
+
+body:has(> .authenticatedViewport) > header,
+body:has(> .authenticatedViewport) > footer {
+  display: none;
+}

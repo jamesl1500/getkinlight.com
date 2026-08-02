@@ -1,0 +1,78 @@
+.fade-up {
+  animation: fade-up 0.8s ease-out both;
+}
+
+.float-soft {
+  animation: float-soft 8s ease-in-out infinite;
+}
+
+.reveal-delay-1 {
+  animation-delay: 80ms;
+}
+
+.reveal-delay-2 {
+  animation-delay: 160ms;
+}
+
+.reveal-delay-3 {
+  animation-delay: 240ms;
+}
+
+.reveal-delay-4 {
+  animation-delay: 320ms;
+}
+
+.reveal-delay-5 {
+  animation-delay: 400ms;
+}
+
+.reveal-delay-6 {
+  animation-delay: 480ms;
+}
+
+.hero-stagger > * {
+  animation: fade-up 0.8s ease-out both;
+}
+
+.hero-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.hero-stagger > *:nth-child(2) {
+  animation-delay: 90ms;
+}
+
+.hero-stagger > *:nth-child(3) {
+  animation-delay: 180ms;
+}
+
+.hero-stagger > *:nth-child(4) {
+  animation-delay: 270ms;
+}
+
+.hero-stagger > *:nth-child(5) {
+  animation-delay: 360ms;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-7px);
+  }
+}

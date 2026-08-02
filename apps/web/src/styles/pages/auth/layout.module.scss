@@ -1,0 +1,75 @@
+.authShell {
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.authShell::before,
+.authShell::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  filter: blur(32px);
+}
+
+.authShell::before {
+  inset: 2rem 44% 46% -12%;
+  background: radial-gradient(
+    ellipse,
+    rgba(255, 182, 148, 0.32),
+    transparent 68%
+  );
+}
+
+.authShell::after {
+  inset: 38% -14% -8% 48%;
+  background: radial-gradient(
+    ellipse,
+    rgba(155, 229, 221, 0.34),
+    transparent 68%
+  );
+}
+
+.authStage {
+  position: relative;
+  z-index: 10;
+  min-height: 100svh;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.authStageInner {
+  width: min(100%, 72rem);
+  display: flex;
+  justify-content: center;
+}
+
+.backLink {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  display: inline-block;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  transition: color 150ms ease;
+}
+
+.backLink:hover {
+  color: var(--ink);
+}
+
+@media (min-width: 768px) {
+  .authStage {
+    padding: 1.5rem;
+  }
+
+  .backLink {
+    top: 1.25rem;
+    left: 1.5rem;
+  }
+}

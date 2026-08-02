@@ -1,0 +1,22 @@
+:root {
+  --canvas: #f4f7ff;
+  --ink: #10233d;
+  --ink-soft: #526682;
+  --line: rgba(255, 255, 255, 0.62);
+  --glass: rgba(255, 255, 255, 0.28);
+  --glass-strong: rgba(255, 255, 255, 0.5);
+  --glass-edge: rgba(255, 255, 255, 0.78);
+  --glass-depth: rgba(30, 76, 112, 0.08);
+  --glass-shadow: 0 12px 32px rgba(19, 55, 86, 0.07);
+  --peach: #ffb694;
+  --aqua: #9be5dd;
+  --sun: #f9e7a2;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --font-sans: var(--font-body);
+  --font-serif: var(--font-headline);
+}
