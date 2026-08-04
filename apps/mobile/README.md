@@ -1,50 +1,47 @@
-# Welcome to your Expo app 👋
+# Kinlight mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The Expo and React Native client for Kinlight. It uses Expo Router, the shared versioned API client, and Supabase Auth with encrypted native session persistence.
 
-## Get started
+## Setup
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Install workspace dependencies from the repository root:
 
 ```bash
-npm run reset-project
+pnpm install --frozen-lockfile
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Copy `apps/mobile/.env.example` to `apps/mobile/.env.local` and provide the staging values:
 
-## Learn more
+```bash
+EXPO_PUBLIC_KINLIGHT_API_URL=https://your-staging-web-origin.example
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+The API URL is the web deployment origin without `/api/v1` and without a trailing slash. Expo embeds `EXPO_PUBLIC_` values in the client bundle, so never place secret or service-role keys in them.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Start Expo from the repository root:
 
-## Join the community
+```bash
+pnpm mobile
+```
 
-Join our community of developers creating universal apps.
+Then open the project in Expo Go, an Android emulator, or an iOS simulator.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Authentication
+
+The sign-in screen sends credentials to the shared `POST /api/v1/auth` contract. The returned Supabase session is installed in the native client and persisted with Expo SecureStore on Android and iOS. Web development uses browser local storage.
+
+Expo Router protected routes expose the sign-in screen only while signed out and the Kinlight tab shell only while signed in. Session refresh starts while the native app is active and pauses in the background.
+
+## Navigation
+
+The authenticated shell contains Home, Care, Calendar, Family, and Settings. Home and sign-out are functional in this first slice; care, calendar, and family are prepared for their API-backed workflows.
+
+## Checks
+
+```bash
+pnpm --filter @getkinlight.com/mobile lint
+pnpm --filter @getkinlight.com/mobile exec tsc --noEmit
+pnpm --filter @getkinlight.com/mobile exec expo export --platform web
+```

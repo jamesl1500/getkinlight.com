@@ -1,4 +1,5 @@
 import {
+  GET as legacyGet,
   PATCH as legacyPatch,
   POST as legacyPost,
 } from "../../care-schedule/route";
@@ -11,5 +12,6 @@ const policy = {
   maxBodyBytes: 65_536,
 };
 
+export const GET = withApiV1(legacyGet, policy);
 export const POST = withApiV1(legacyPost, policy);
 export const PATCH = withApiV1(legacyPatch, policy);

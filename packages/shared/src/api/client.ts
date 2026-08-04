@@ -1,27 +1,48 @@
 import { z, type ZodType } from "zod";
-import { AiRequestSchema, AiResponseSchema, type AiRequest, type AiResponse } from "../schemas/ai";
-import { AuthRequestSchema, AuthResponseSchema, type AuthRequest, type AuthResponse } from "../schemas/auth";
 import {
+  AiRequestSchema,
+  AiResponseSchema,
+  type AiRequest,
+  type AiResponse,
+} from "../schemas/ai";
+import {
+  AuthRequestSchema,
+  AuthResponseSchema,
+  type AuthRequest,
+  type AuthResponse,
+} from "../schemas/auth";
+import {
+  CareScheduleRangeQuerySchema,
+  CareScheduleRangeResponseSchema,
   CreateCareScheduleRequestSchema,
   CreateCareScheduleResponseSchema,
   UpdateFamilyEventRequestSchema,
   UpdateFamilyEventResponseSchema,
   type CreateCareScheduleRequest,
   type CreateCareScheduleResponse,
+  type CareScheduleRangeResponse,
   type UpdateFamilyEventRequest,
   type UpdateFamilyEventResponse,
 } from "../schemas/care-schedule";
 import {
   CareMutationRequestSchema,
   CareMutationResponseSchema,
+  CareWorkspaceResponseSchema,
   type CareMutationRequest,
   type CareMutationResponse,
+  type CareWorkspaceResponse,
 } from "../schemas/care";
+import {
+  DashboardResponseSchema,
+  type DashboardResponse,
+} from "../schemas/dashboard";
 import {
   FamilyMutationRequestSchema,
   FamilyMutationResponseSchema,
+  FamilyWorkspaceResponseSchema,
   type FamilyMutationRequest,
   type FamilyMutationResponse,
+  type FamilyWorkspaceResponse,
 } from "../schemas/family";
 import {
   OnboardingRequestSchema,
@@ -96,7 +117,9 @@ function errorCodeForStatus(status: number): KinlightApiErrorCode {
   return "VALIDATION_ERROR";
 }
 
-export function createKinlightApiClient(options: KinlightApiClientOptions = {}) {
+export function createKinlightApiClient(
+  options: KinlightApiClientOptions = {},
+) {
   const baseUrl = options.baseUrl?.replace(/\/$/, "") ?? "";
   const fetchImpl = options.fetch ?? globalThis.fetch;
 
@@ -118,18 +141,24 @@ export function createKinlightApiClient(options: KinlightApiClientOptions = {}) 
       );
     }
 
-    const body = inputSchema && input !== undefined ? inputSchema.parse(input) : input;
+    const body =
+      inputSchema && input !== undefined ? inputSchema.parse(input) : input;
     let response: Response;
     try {
-      response = await fetchImpl(`${baseUrl}/api/${KINLIGHT_API_VERSION}/${path}`, {
-        method,
-        headers: {
-          Accept: "application/json",
-          ...(body === undefined ? {} : { "Content-Type": "application/json" }),
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      response = await fetchImpl(
+        `${baseUrl}/api/${KINLIGHT_API_VERSION}/${path}`,
+        {
+          method,
+          headers: {
+            Accept: "application/json",
+            ...(body === undefined
+              ? {}
+              : { "Content-Type": "application/json" }),
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         },
-        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-      });
+      );
     } catch (cause) {
       throw new KinlightApiError(
         "Unable to reach Kinlight. Check your connection and try again.",
@@ -196,9 +225,15 @@ export function createKinlightApiClient(options: KinlightApiClientOptions = {}) 
     },
     onboarding: {
       get(): Promise<OnboardingResponse> {
-        return request({ path: "onboarding", method: "GET", outputSchema: OnboardingResponseSchema });
+        return request({
+          path: "onboarding",
+          method: "GET",
+          outputSchema: OnboardingResponseSchema,
+        });
       },
-      async save(input: Omit<OnboardingRequest, "accessToken">): Promise<OnboardingResponse> {
+      async save(
+        input: Omit<OnboardingRequest, "accessToken">,
+      ): Promise<OnboardingResponse> {
         const accessToken = (await options.getAccessToken?.()) ?? null;
         if (!accessToken) {
           throw new KinlightApiError(
@@ -217,22 +252,100 @@ export function createKinlightApiClient(options: KinlightApiClientOptions = {}) 
         });
       },
     },
+    dashboard: {
+      get(date?: string): Promise<DashboardResponse> {
+        const path = date
+          ? `dashboard?date=${encodeURIComponent(date)}`
+          : "dashboard";
+        return request({
+          path,
+          method: "GET",
+          outputSchema: DashboardResponseSchema,
+        });
+      },
+    },
     care(input: CareMutationRequest): Promise<CareMutationResponse> {
-      return request({ path: "care", method: "POST", input, inputSchema: CareMutationRequestSchema, outputSchema: CareMutationResponseSchema });
+      return request({
+        path: "care",
+        method: "POST",
+        input,
+        inputSchema: CareMutationRequestSchema,
+        outputSchema: CareMutationResponseSchema,
+      });
+    },
+    careWorkspace: {
+      get(recipientId?: string): Promise<CareWorkspaceResponse> {
+        const path = recipientId
+          ? `care?recipient=${encodeURIComponent(recipientId)}`
+          : "care";
+        return request({
+          path,
+          method: "GET",
+          outputSchema: CareWorkspaceResponseSchema,
+        });
+      },
     },
     family(input: FamilyMutationRequest): Promise<FamilyMutationResponse> {
-      return request({ path: "family", method: "POST", input, inputSchema: FamilyMutationRequestSchema, outputSchema: FamilyMutationResponseSchema });
+      return request({
+        path: "family",
+        method: "POST",
+        input,
+        inputSchema: FamilyMutationRequestSchema,
+        outputSchema: FamilyMutationResponseSchema,
+      });
+    },
+    familyWorkspace: {
+      get(householdId?: string): Promise<FamilyWorkspaceResponse> {
+        const path = householdId
+          ? `family?household=${encodeURIComponent(householdId)}`
+          : "family";
+        return request({
+          path,
+          method: "GET",
+          outputSchema: FamilyWorkspaceResponseSchema,
+        });
+      },
     },
     schedule: {
-      create(input: CreateCareScheduleRequest): Promise<CreateCareScheduleResponse> {
-        return request({ path: "care-schedule", method: "POST", input, inputSchema: CreateCareScheduleRequestSchema, outputSchema: CreateCareScheduleResponseSchema });
+      getRange(start: string, end: string): Promise<CareScheduleRangeResponse> {
+        const range = CareScheduleRangeQuerySchema.parse({ start, end });
+        return request({
+          path: `care-schedule?start=${encodeURIComponent(range.start)}&end=${encodeURIComponent(range.end)}`,
+          method: "GET",
+          outputSchema: CareScheduleRangeResponseSchema,
+        });
       },
-      updateEvent(input: UpdateFamilyEventRequest): Promise<UpdateFamilyEventResponse> {
-        return request({ path: "care-schedule", method: "PATCH", input, inputSchema: UpdateFamilyEventRequestSchema, outputSchema: UpdateFamilyEventResponseSchema });
+      create(
+        input: CreateCareScheduleRequest,
+      ): Promise<CreateCareScheduleResponse> {
+        return request({
+          path: "care-schedule",
+          method: "POST",
+          input,
+          inputSchema: CreateCareScheduleRequestSchema,
+          outputSchema: CreateCareScheduleResponseSchema,
+        });
+      },
+      updateEvent(
+        input: UpdateFamilyEventRequest,
+      ): Promise<UpdateFamilyEventResponse> {
+        return request({
+          path: "care-schedule",
+          method: "PATCH",
+          input,
+          inputSchema: UpdateFamilyEventRequestSchema,
+          outputSchema: UpdateFamilyEventResponseSchema,
+        });
       },
     },
     ai(input: AiRequest): Promise<AiResponse> {
-      return request({ path: "ai", method: "POST", input, inputSchema: AiRequestSchema, outputSchema: AiResponseSchema });
+      return request({
+        path: "ai",
+        method: "POST",
+        input,
+        inputSchema: AiRequestSchema,
+        outputSchema: AiResponseSchema,
+      });
     },
   };
 }

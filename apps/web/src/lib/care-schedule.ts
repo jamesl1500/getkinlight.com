@@ -1,4 +1,5 @@
 import { createKinlightServerComponentClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type CareScheduleItem = {
   id: string;
@@ -171,8 +172,9 @@ function datesInRange(start: Date, end: Date) {
 export async function getCareScheduleForRange(
   start: Date,
   end: Date,
+  client?: SupabaseClient,
 ): Promise<CareScheduleItem[]> {
-  const supabase = await createKinlightServerComponentClient();
+  const supabase = client ?? (await createKinlightServerComponentClient());
   const startDay = dateKey(start);
   const endDay = dateKey(end);
   const finalDay = new Date(end);
@@ -214,6 +216,14 @@ export async function getCareScheduleForRange(
         .lte("starts_on", dateKey(finalDay))
         .or(`ends_on.is.null,ends_on.gte.${startDay}`),
     ]);
+
+  const queryError = [
+    eventsResult.error,
+    appointmentsResult.error,
+    medicationResult.error,
+    eatingResult.error,
+  ].find(Boolean);
+  if (queryError) throw queryError;
 
   const events = (eventsResult.data ?? []).map((row) => {
     const event = row as TimedRow;
@@ -288,9 +298,10 @@ export async function getCareScheduleForRange(
 
 export async function getCareScheduleForDate(
   date: Date,
+  client?: SupabaseClient,
 ): Promise<CareScheduleItem[]> {
   const start = new Date(`${dateKey(date)}T00:00:00.000Z`);
   const end = new Date(start);
   end.setUTCDate(end.getUTCDate() + 1);
-  return getCareScheduleForRange(start, end);
+  return getCareScheduleForRange(start, end, client);
 }

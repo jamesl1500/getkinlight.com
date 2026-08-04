@@ -1,11 +1,16 @@
 import {
+  CareScheduleRangeQuerySchema,
+  CareScheduleRangeResponseSchema,
   CreateCareScheduleRequestSchema,
   CreateCareScheduleResponseSchema,
   UpdateFamilyEventRequestSchema,
   UpdateFamilyEventResponseSchema,
   createKinlightServerClient,
 } from "@getkinlight.com/shared";
+import { getCareScheduleForRange } from "@/lib/care-schedule";
 import { NextResponse } from "next/server";
+
+const DAY_MS = 86_400_000;
 
 function bearerToken(request: Request) {
   const authorization = request.headers.get("authorization");
@@ -16,6 +21,90 @@ function bearerToken(request: Request) {
 
 function utcDateTime(date: string, time: string) {
   return `${date}T${time}:00.000Z`;
+}
+
+function parseDate(value: string) {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value
+    ? null
+    : date;
+}
+
+export async function GET(request: Request) {
+  const accessToken = bearerToken(request);
+  if (!accessToken) {
+    return NextResponse.json(
+      { ok: false, message: "Your session has expired." },
+      { status: 401 },
+    );
+  }
+
+  const url = new URL(request.url);
+  const query = CareScheduleRangeQuerySchema.safeParse({
+    start: url.searchParams.get("start"),
+    end: url.searchParams.get("end"),
+  });
+  const start = query.success ? parseDate(query.data.start) : null;
+  const end = query.success ? parseDate(query.data.end) : null;
+  const rangeDays = start && end ? (end.getTime() - start.getTime()) / DAY_MS : 0;
+  if (!query.success || !start || !end || rangeDays < 1 || rangeDays > 42) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Choose a valid calendar range of 1 to 42 days.",
+      },
+      { status: 400 },
+    );
+  }
+
+  const supabase = createKinlightServerClient(accessToken);
+  const { data: userData, error: userError } =
+    await supabase.auth.getUser(accessToken);
+  if (userError || !userData.user) {
+    return NextResponse.json(
+      { ok: false, message: "Your session has expired." },
+      { status: 401 },
+    );
+  }
+
+  try {
+    const [items, householdsResult, recipientsResult] = await Promise.all([
+      getCareScheduleForRange(start, end, supabase),
+      supabase.from("households").select("id, name").order("name"),
+      supabase
+        .from("care_recipients")
+        .select("id, household_id, first_name, preferred_name")
+        .eq("is_active", true)
+        .order("first_name"),
+    ]);
+    if (householdsResult.error || recipientsResult.error) {
+      throw householdsResult.error ?? recipientsResult.error;
+    }
+
+    return NextResponse.json(
+      CareScheduleRangeResponseSchema.parse({
+        ok: true,
+        message: "Care calendar loaded.",
+        start: query.data.start,
+        end: query.data.end,
+        items,
+        households: (householdsResult.data ?? []).map((household) => ({
+          id: household.id,
+          name: household.name,
+        })),
+        recipients: (recipientsResult.data ?? []).map((recipient) => ({
+          id: recipient.id,
+          householdId: recipient.household_id,
+          name: recipient.preferred_name ?? recipient.first_name,
+        })),
+      }),
+    );
+  } catch {
+    return NextResponse.json(
+      { ok: false, message: "Unable to load the care calendar." },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(request: Request) {

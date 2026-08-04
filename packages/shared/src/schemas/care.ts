@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CareScheduleItemSchema } from "./care-schedule";
 
 const uuid = z.uuid();
 const optionalText = (max: number) => z.string().trim().max(max).optional();
@@ -79,3 +80,71 @@ export const CareMutationResponseSchema = z.object({
 });
 
 export type CareMutationResponse = z.infer<typeof CareMutationResponseSchema>;
+
+export const CareRecipientSchema = z.object({
+  id: uuid,
+  householdId: uuid,
+  firstName: z.string(),
+  lastName: z.string(),
+  preferredName: z.string().nullable(),
+  dateOfBirth: date.nullable(),
+  relationship: z.string().nullable(),
+  carePreferences: z.string().nullable(),
+  isActive: z.boolean(),
+});
+
+export const MedicationReminderSchema = z.object({
+  id: uuid,
+  medicationName: z.string(),
+  dosage: z.string().nullable(),
+  instructions: z.string().nullable(),
+  startsOn: date,
+  endsOn: date.nullable(),
+  reminderTimes: z.array(z.string()),
+  daysOfWeek: z.array(z.number().int()),
+  isActive: z.boolean(),
+});
+
+export const EatingReminderSchema = z.object({
+  id: uuid,
+  title: z.string(),
+  mealType: z.string(),
+  reminderTimes: z.array(z.string()),
+  isActive: z.boolean(),
+});
+
+export const CareCheckInSchema = z.object({
+  id: uuid,
+  status: z.enum(["doing_well", "okay", "needs_attention", "urgent"]),
+  mood: z.number().int().min(1).max(5).nullable(),
+  summary: z.string().nullable(),
+  occurredAt: z.string(),
+});
+
+export const CareNoteSchema = z.object({
+  id: uuid,
+  title: z.string().nullable(),
+  body: z.string(),
+  isPinned: z.boolean(),
+  createdAt: z.string(),
+});
+
+export const CareWorkspaceResponseSchema = z.object({
+  ok: z.boolean(),
+  message: z.string(),
+  households: z.array(z.object({ id: uuid, name: z.string() })),
+  recipients: z.array(CareRecipientSchema),
+  selectedRecipient: CareRecipientSchema.nullable(),
+  medications: z.array(MedicationReminderSchema),
+  eatingReminders: z.array(EatingReminderSchema),
+  checkIns: z.array(CareCheckInSchema),
+  notes: z.array(CareNoteSchema),
+  schedule: z.array(CareScheduleItemSchema),
+});
+
+export type CareRecipient = z.infer<typeof CareRecipientSchema>;
+export type MedicationReminder = z.infer<typeof MedicationReminderSchema>;
+export type EatingReminder = z.infer<typeof EatingReminderSchema>;
+export type CareCheckIn = z.infer<typeof CareCheckInSchema>;
+export type CareNote = z.infer<typeof CareNoteSchema>;
+export type CareWorkspaceResponse = z.infer<typeof CareWorkspaceResponseSchema>;

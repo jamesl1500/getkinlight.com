@@ -1,5 +1,6 @@
 import type { CareRecipient } from "@/lib/care";
 import { createKinlightServerComponentClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type HouseholdRole = "owner" | "member" | "caregiver";
 
@@ -45,8 +46,9 @@ export type FamilyWorkspaceData = {
 
 export async function getFamilyWorkspaceData(
   requestedHouseholdId?: string,
+  client?: SupabaseClient,
 ): Promise<FamilyWorkspaceData> {
-  const supabase = await createKinlightServerComponentClient();
+  const supabase = client ?? (await createKinlightServerComponentClient());
   const {
     data: { user },
   } = await supabase.auth.getUser();

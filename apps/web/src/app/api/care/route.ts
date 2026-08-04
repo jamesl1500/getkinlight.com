@@ -1,6 +1,8 @@
+import { getCareWorkspaceData } from "@/lib/care";
 import {
   CareMutationRequestSchema,
   CareMutationResponseSchema,
+  CareWorkspaceResponseSchema,
   createKinlightServerClient,
 } from "@getkinlight.com/shared";
 import { NextResponse } from "next/server";
@@ -17,6 +19,44 @@ function response(message: string, status: number, id: string | null = null) {
     CareMutationResponseSchema.parse({ ok: status < 400, message, id }),
     { status },
   );
+}
+
+export async function GET(request: Request) {
+  const accessToken = bearerToken(request);
+  if (!accessToken) {
+    return NextResponse.json(
+      { ok: false, message: "Your session has expired." },
+      { status: 401 },
+    );
+  }
+
+  const supabase = createKinlightServerClient(accessToken);
+  const { data: userData, error: userError } =
+    await supabase.auth.getUser(accessToken);
+  if (userError || !userData.user) {
+    return NextResponse.json(
+      { ok: false, message: "Your session has expired." },
+      { status: 401 },
+    );
+  }
+
+  const recipientId =
+    new URL(request.url).searchParams.get("recipient") ?? undefined;
+  try {
+    const workspace = await getCareWorkspaceData(recipientId, supabase);
+    return NextResponse.json(
+      CareWorkspaceResponseSchema.parse({
+        ok: true,
+        message: "Care workspace loaded.",
+        ...workspace,
+      }),
+    );
+  } catch {
+    return NextResponse.json(
+      { ok: false, message: "Unable to load the care workspace." },
+      { status: 400 },
+    );
+  }
 }
 
 export async function POST(request: Request) {

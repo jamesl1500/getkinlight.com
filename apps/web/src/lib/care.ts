@@ -1,72 +1,30 @@
-import {
-  getCareScheduleForRange,
-  type CareScheduleItem,
-} from "@/lib/care-schedule";
+import { getCareScheduleForRange } from "@/lib/care-schedule";
 import { createKinlightServerComponentClient } from "@/lib/supabase/server";
+import type {
+  CareCheckIn,
+  CareNote,
+  CareRecipient,
+  CareWorkspaceResponse,
+  EatingReminder,
+  MedicationReminder,
+} from "@getkinlight.com/shared";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type CareRecipient = {
-  id: string;
-  householdId: string;
-  firstName: string;
-  lastName: string;
-  preferredName: string | null;
-  dateOfBirth: string | null;
-  relationship: string | null;
-  carePreferences: string | null;
-  isActive: boolean;
+export type {
+  CareCheckIn,
+  CareNote,
+  CareRecipient,
+  EatingReminder,
+  MedicationReminder,
 };
 
-export type MedicationReminder = {
-  id: string;
-  medicationName: string;
-  dosage: string | null;
-  instructions: string | null;
-  startsOn: string;
-  endsOn: string | null;
-  reminderTimes: string[];
-  daysOfWeek: number[];
-  isActive: boolean;
-};
-
-export type EatingReminder = {
-  id: string;
-  title: string;
-  mealType: string;
-  reminderTimes: string[];
-  isActive: boolean;
-};
-
-export type CareCheckIn = {
-  id: string;
-  status: "doing_well" | "okay" | "needs_attention" | "urgent";
-  mood: number | null;
-  summary: string | null;
-  occurredAt: string;
-};
-
-export type CareNote = {
-  id: string;
-  title: string | null;
-  body: string;
-  isPinned: boolean;
-  createdAt: string;
-};
-
-export type CareWorkspaceData = {
-  households: Array<{ id: string; name: string }>;
-  recipients: CareRecipient[];
-  selectedRecipient: CareRecipient | null;
-  medications: MedicationReminder[];
-  eatingReminders: EatingReminder[];
-  checkIns: CareCheckIn[];
-  notes: CareNote[];
-  schedule: CareScheduleItem[];
-};
+export type CareWorkspaceData = Omit<CareWorkspaceResponse, "ok" | "message">;
 
 export async function getCareWorkspaceData(
   requestedRecipientId?: string,
+  client?: SupabaseClient,
 ): Promise<CareWorkspaceData> {
-  const supabase = await createKinlightServerComponentClient();
+  const supabase = client ?? (await createKinlightServerComponentClient());
   const [householdsResult, recipientsResult] = await Promise.all([
     supabase.from("households").select("id, name").order("name"),
     supabase
@@ -146,7 +104,7 @@ export async function getCareWorkspaceData(
       .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(50),
-    getCareScheduleForRange(scheduleStart, scheduleEnd),
+    getCareScheduleForRange(scheduleStart, scheduleEnd, supabase),
   ]);
 
   const queryError =

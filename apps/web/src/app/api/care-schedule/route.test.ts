@@ -7,7 +7,7 @@ vi.mock("@getkinlight.com/shared", async (importOriginal) => ({
   createKinlightServerClient: mocks.createClient,
 }));
 
-import { PATCH, POST } from "./route";
+import { GET, PATCH, POST } from "./route";
 
 const householdId = "10000000-0000-4000-8000-000000000001";
 const recipientId = "20000000-0000-4000-8000-000000000001";
@@ -25,6 +25,88 @@ function request(method: "POST" | "PATCH", body: unknown, token = "token") {
 
 describe("care schedule API route", () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it("loads an authenticated, normalized calendar range", async () => {
+    const supabase = createSupabaseMock({
+      household_events: {
+        data: [
+          {
+            id: sourceId,
+            household_id: householdId,
+            care_recipient_id: recipientId,
+            title: "Family visit",
+            description: null,
+            starts_at: "2026-08-03T14:00:00.000Z",
+            ends_at: null,
+            location: "Home",
+            is_all_day: false,
+            households: { name: "Family" },
+            care_recipients: { first_name: "Pat", preferred_name: "Patsy" },
+          },
+        ],
+        error: null,
+      },
+      households: { data: [{ id: householdId, name: "Family" }], error: null },
+      care_recipients: {
+        data: [
+          {
+            id: recipientId,
+            household_id: householdId,
+            first_name: "Pat",
+            preferred_name: "Patsy",
+          },
+        ],
+        error: null,
+      },
+    });
+    mocks.createClient.mockReturnValue(supabase.client);
+
+    const response = await GET(
+      new Request(
+        "http://localhost/api/care-schedule?start=2026-08-02&end=2026-08-09",
+        { headers: { authorization: "Bearer token" } },
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      ok: true,
+      start: "2026-08-02",
+      end: "2026-08-09",
+      items: [{ kind: "event", title: "Family visit", recipientName: "Patsy" }],
+      households: [{ id: householdId, name: "Family" }],
+      recipients: [{ id: recipientId, householdId, name: "Patsy" }],
+    });
+  });
+
+  it("rejects unauthenticated, invalid, expired, and oversized ranges", async () => {
+    const endpoint = "http://localhost/api/care-schedule";
+    expect((await GET(new Request(`${endpoint}?start=2026-08-01&end=2026-08-02`))).status).toBe(401);
+    expect((await GET(new Request(`${endpoint}?start=2026-02-30&end=2026-03-02`, { headers: { authorization: "Bearer token" } }))).status).toBe(400);
+    expect((await GET(new Request(`${endpoint}?start=2026-08-01&end=2026-09-13`, { headers: { authorization: "Bearer token" } }))).status).toBe(400);
+
+    const expired = createSupabaseMock({}, { data: { user: null }, error: new Error("expired") });
+    mocks.createClient.mockReturnValue(expired.client);
+    expect((await GET(new Request(`${endpoint}?start=2026-08-01&end=2026-08-02`, { headers: { authorization: "Bearer token" } }))).status).toBe(401);
+  });
+
+  it("returns a safe error when calendar data cannot be loaded", async () => {
+    const supabase = createSupabaseMock({
+      household_events: { data: null, error: new Error("database unavailable") },
+    });
+    mocks.createClient.mockReturnValue(supabase.client);
+    const response = await GET(
+      new Request(
+        "http://localhost/api/care-schedule?start=2026-08-01&end=2026-08-02",
+        { headers: { authorization: "Bearer token" } },
+      ),
+    );
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({
+      ok: false,
+      message: "Unable to load the care calendar.",
+    });
+  });
 
   it("rejects unauthenticated, malformed, and expired requests", async () => {
     expect((await POST(request("POST", {}, ""))).status).toBe(401);

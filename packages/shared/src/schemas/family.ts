@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CareRecipientSchema } from "./care";
 
 const uuid = z.uuid();
 const memberRole = z.enum(["owner", "member", "caregiver"]);
@@ -45,4 +46,45 @@ export const FamilyMutationResponseSchema = z.object({
   invitationToken: z.string().nullable(),
 });
 
-export type FamilyMutationResponse = z.infer<typeof FamilyMutationResponseSchema>;
+export type FamilyMutationResponse = z.infer<
+  typeof FamilyMutationResponseSchema
+>;
+
+export const FamilyWorkspaceResponseSchema = z.object({
+  ok: z.boolean(),
+  message: z.string(),
+  currentUserId: uuid,
+  households: z.array(
+    z.object({ id: uuid, name: z.string(), createdAt: z.string() }),
+  ),
+  selectedHousehold: z
+    .object({ id: uuid, name: z.string(), createdAt: z.string() })
+    .nullable(),
+  members: z.array(
+    z.object({
+      id: uuid,
+      userId: uuid,
+      role: memberRole,
+      firstName: z.string().nullable(),
+      lastName: z.string().nullable(),
+      username: z.string().nullable(),
+      email: z.string().nullable(),
+      joinedAt: z.string(),
+    }),
+  ),
+  invitations: z.array(
+    z.object({
+      id: uuid,
+      email: z.email(),
+      role: memberRole.exclude(["owner"]),
+      token: z.string(),
+      expiresAt: z.string(),
+    }),
+  ),
+  recipients: z.array(CareRecipientSchema),
+  currentUserRole: memberRole.nullable(),
+});
+
+export type FamilyWorkspaceResponse = z.infer<
+  typeof FamilyWorkspaceResponseSchema
+>;

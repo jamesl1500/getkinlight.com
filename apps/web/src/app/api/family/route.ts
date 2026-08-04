@@ -1,8 +1,10 @@
 import {
   FamilyMutationRequestSchema,
   FamilyMutationResponseSchema,
+  FamilyWorkspaceResponseSchema,
   createKinlightServerClient,
 } from "@getkinlight.com/shared";
+import { getFamilyWorkspaceData } from "@/lib/family";
 import { NextResponse } from "next/server";
 
 function bearerToken(request: Request) {
@@ -25,6 +27,42 @@ function response(
     }),
     { status },
   );
+}
+
+export async function GET(request: Request) {
+  const accessToken = bearerToken(request);
+  if (!accessToken)
+    return NextResponse.json(
+      { ok: false, message: "Your session has expired." },
+      { status: 401 },
+    );
+
+  const supabase = createKinlightServerClient(accessToken);
+  const { data: userData, error: userError } =
+    await supabase.auth.getUser(accessToken);
+  if (userError || !userData.user)
+    return NextResponse.json(
+      { ok: false, message: "Your session has expired." },
+      { status: 401 },
+    );
+
+  try {
+    const householdId =
+      new URL(request.url).searchParams.get("household") ?? undefined;
+    const workspace = await getFamilyWorkspaceData(householdId, supabase);
+    return NextResponse.json(
+      FamilyWorkspaceResponseSchema.parse({
+        ok: true,
+        message: "Family workspace loaded.",
+        ...workspace,
+      }),
+    );
+  } catch {
+    return NextResponse.json(
+      { ok: false, message: "Unable to load the family workspace." },
+      { status: 400 },
+    );
+  }
 }
 
 export async function POST(request: Request) {

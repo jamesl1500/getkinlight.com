@@ -64,6 +64,157 @@ describe("Kinlight API client", () => {
     );
   });
 
+  it("loads the dashboard for the device calendar date", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            ok: true,
+            message: "Dashboard loaded.",
+            profile: {
+              firstName: "Jamie",
+              lastName: "Lee",
+              username: "jamie",
+              role: "family",
+            },
+            household: null,
+            schedule: [],
+            recentUpdates: [],
+          }),
+          { status: 200 },
+        ),
+    );
+    const client = createKinlightApiClient({
+      getAccessToken: () => "access-token",
+      fetch: fetchMock,
+    });
+
+    const result = await client.dashboard.get("2026-08-02");
+
+    expect(result.profile.firstName).toBe("Jamie");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/dashboard?date=2026-08-02",
+      expect.objectContaining({
+        method: "GET",
+        headers: expect.objectContaining({
+          Authorization: "Bearer access-token",
+        }),
+      }),
+    );
+  });
+
+  it("loads a selected Care workspace", async () => {
+    const recipientId = "20000000-0000-4000-8000-000000000001";
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            ok: true,
+            message: "Care workspace loaded.",
+            households: [],
+            recipients: [],
+            selectedRecipient: null,
+            medications: [],
+            eatingReminders: [],
+            checkIns: [],
+            notes: [],
+            schedule: [],
+          }),
+          { status: 200 },
+        ),
+    );
+    const client = createKinlightApiClient({
+      getAccessToken: () => "access-token",
+      fetch: fetchMock,
+    });
+
+    const result = await client.careWorkspace.get(recipientId);
+
+    expect(result.selectedRecipient).toBeNull();
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/v1/care?recipient=${recipientId}`,
+      expect.objectContaining({
+        method: "GET",
+        headers: expect.objectContaining({
+          Authorization: "Bearer access-token",
+        }),
+      }),
+    );
+  });
+
+  it("loads a validated care calendar range", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            ok: true,
+            message: "Care calendar loaded.",
+            start: "2026-08-02",
+            end: "2026-08-09",
+            items: [],
+            households: [],
+            recipients: [],
+          }),
+          { status: 200 },
+        ),
+    );
+    const client = createKinlightApiClient({
+      getAccessToken: () => "access-token",
+      fetch: fetchMock,
+    });
+
+    const result = await client.schedule.getRange("2026-08-02", "2026-08-09");
+
+    expect(result.items).toEqual([]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/care-schedule?start=2026-08-02&end=2026-08-09",
+      expect.objectContaining({
+        method: "GET",
+        headers: expect.objectContaining({
+          Authorization: "Bearer access-token",
+        }),
+      }),
+    );
+  });
+
+  it("loads a selected Family workspace", async () => {
+    const householdId = "10000000-0000-4000-8000-000000000001";
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            ok: true,
+            message: "Family workspace loaded.",
+            currentUserId: "40000000-0000-4000-8000-000000000001",
+            households: [],
+            selectedHousehold: null,
+            members: [],
+            invitations: [],
+            recipients: [],
+            currentUserRole: null,
+          }),
+          { status: 200 },
+        ),
+    );
+    const client = createKinlightApiClient({
+      getAccessToken: () => "access-token",
+      fetch: fetchMock,
+    });
+
+    const result = await client.familyWorkspace.get(householdId);
+
+    expect(result.selectedHousehold).toBeNull();
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/v1/family?household=${householdId}`,
+      expect.objectContaining({
+        method: "GET",
+        headers: expect.objectContaining({
+          Authorization: "Bearer access-token",
+        }),
+      }),
+    );
+  });
+
   it("exposes stable server error codes and request IDs", async () => {
     const client = createKinlightApiClient({
       getAccessToken: () => "token",

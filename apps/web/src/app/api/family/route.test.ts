@@ -1,13 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createSupabaseMock } from "@/test/supabase-mock";
 
-const mocks = vi.hoisted(() => ({ createClient: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  createClient: vi.fn(),
+  workspace: vi.fn(),
+}));
+vi.mock("@/lib/family", () => ({
+  getFamilyWorkspaceData: mocks.workspace,
+}));
 vi.mock("@getkinlight.com/shared", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@getkinlight.com/shared")>()),
   createKinlightServerClient: mocks.createClient,
 }));
 
-import { POST } from "./route";
+import { GET, POST } from "./route";
 
 const householdId = "10000000-0000-4000-8000-000000000001";
 const memberId = "20000000-0000-4000-8000-000000000001";
@@ -24,7 +30,72 @@ function request(body: unknown, token = "token") {
 }
 
 describe("family API route", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.workspace.mockResolvedValue({
+      currentUserId: "40000000-0000-4000-8000-000000000001",
+      households: [],
+      selectedHousehold: null,
+      members: [],
+      invitations: [],
+      recipients: [],
+      currentUserRole: null,
+    });
+  });
+
+  it("loads an authenticated Family workspace", async () => {
+    const supabase = createSupabaseMock({});
+    mocks.createClient.mockReturnValue(supabase.client);
+
+    const response = await GET(
+      new Request(`http://localhost/api/family?household=${householdId}`, {
+        headers: { authorization: "Bearer token" },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      ok: true,
+      message: "Family workspace loaded.",
+      selectedHousehold: null,
+    });
+    expect(mocks.workspace).toHaveBeenCalledWith(householdId, supabase.client);
+  });
+
+  it("rejects invalid sessions and safely handles workspace failures", async () => {
+    expect((await GET(new Request("http://localhost/api/family"))).status).toBe(
+      401,
+    );
+
+    const expired = createSupabaseMock(
+      {},
+      { data: { user: null }, error: new Error("expired") },
+    );
+    mocks.createClient.mockReturnValue(expired.client);
+    expect(
+      (
+        await GET(
+          new Request("http://localhost/api/family", {
+            headers: { authorization: "Bearer token" },
+          }),
+        )
+      ).status,
+    ).toBe(401);
+
+    const supabase = createSupabaseMock({});
+    mocks.createClient.mockReturnValue(supabase.client);
+    mocks.workspace.mockRejectedValue(new Error("database details"));
+    const failed = await GET(
+      new Request("http://localhost/api/family", {
+        headers: { authorization: "Bearer token" },
+      }),
+    );
+    expect(failed.status).toBe(400);
+    expect(await failed.json()).toEqual({
+      ok: false,
+      message: "Unable to load the family workspace.",
+    });
+  });
 
   it("requires a valid session and request schema", async () => {
     expect((await POST(request({}, ""))).status).toBe(401);

@@ -35,12 +35,22 @@ export const CreateCareScheduleRequestSchema = z.discriminatedUnion("type", [
   baseSchema.extend({
     type: z.literal("meal"),
     title: z.string().trim().min(1).max(120),
-    mealType: z.enum(["breakfast", "lunch", "dinner", "snack", "hydration", "meal", "other"]),
+    mealType: z.enum([
+      "breakfast",
+      "lunch",
+      "dinner",
+      "snack",
+      "hydration",
+      "meal",
+      "other",
+    ]),
     notes: optionalText,
   }),
 ]);
 
-export type CreateCareScheduleRequest = z.infer<typeof CreateCareScheduleRequestSchema>;
+export type CreateCareScheduleRequest = z.infer<
+  typeof CreateCareScheduleRequestSchema
+>;
 
 export const UpdateFamilyEventRequestSchema = baseSchema.extend({
   eventId: z.uuid(),
@@ -50,9 +60,11 @@ export const UpdateFamilyEventRequestSchema = baseSchema.extend({
   isAllDay: z.boolean().default(false),
 });
 
-export type UpdateFamilyEventRequest = z.infer<typeof UpdateFamilyEventRequestSchema>;
+export type UpdateFamilyEventRequest = z.infer<
+  typeof UpdateFamilyEventRequestSchema
+>;
 
-const careScheduleItemSchema = z.object({
+export const CareScheduleItemSchema = z.object({
   id: z.string(),
   sourceId: z.uuid(),
   householdId: z.uuid(),
@@ -63,19 +75,56 @@ const careScheduleItemSchema = z.object({
   recipientName: z.string().nullable(),
   startsAt: z.string(),
   isAllDay: z.boolean(),
-  details: z.array(z.object({
-    label: z.string(),
-    value: z.string(),
-  })),
+  details: z.array(
+    z.object({
+      label: z.string(),
+      value: z.string(),
+    }),
+  ),
+});
+
+export const CareScheduleRangeQuerySchema = z.object({
+  start: dateSchema,
+  end: dateSchema,
+});
+
+export const CareScheduleRangeResponseSchema = z.object({
+  ok: z.boolean(),
+  message: z.string(),
+  start: dateSchema,
+  end: dateSchema,
+  items: z.array(CareScheduleItemSchema),
+  households: z.array(z.object({ id: z.uuid(), name: z.string() })),
+  recipients: z.array(
+    z.object({
+      id: z.uuid(),
+      householdId: z.uuid(),
+      name: z.string(),
+    }),
+  ),
 });
 
 export const CreateCareScheduleResponseSchema = z.object({
   ok: z.boolean(),
   message: z.string(),
-  item: careScheduleItemSchema.nullable(),
+  item: CareScheduleItemSchema.nullable(),
 });
 
-export type CreateCareScheduleResponse = z.infer<typeof CreateCareScheduleResponseSchema>;
+export type CareScheduleItem = z.infer<typeof CareScheduleItemSchema>;
+
+export type CareScheduleRangeQuery = z.infer<
+  typeof CareScheduleRangeQuerySchema
+>;
+
+export type CareScheduleRangeResponse = z.infer<
+  typeof CareScheduleRangeResponseSchema
+>;
+
+export type CreateCareScheduleResponse = z.infer<
+  typeof CreateCareScheduleResponseSchema
+>;
 
 export const UpdateFamilyEventResponseSchema = CreateCareScheduleResponseSchema;
-export type UpdateFamilyEventResponse = z.infer<typeof UpdateFamilyEventResponseSchema>;
+export type UpdateFamilyEventResponse = z.infer<
+  typeof UpdateFamilyEventResponseSchema
+>;
