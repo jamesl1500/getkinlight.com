@@ -8,7 +8,13 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "doctor": "pnpm dlx expo-doctor",
+    "build": "expo export --platform all",
+    "quality": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run build"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -48,6 +54,7 @@
     "@types/react": "~19.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "prettier": "^3.9.6",
     "typescript": "~5.9.2"
   },
   "private": true

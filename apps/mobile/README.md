@@ -26,7 +26,8 @@ Start Expo from the repository root:
 pnpm mobile
 ```
 
-Then open the project in Expo Go, an Android emulator, or an iOS simulator.
+Then open the project in a development build, Expo Go, an Android emulator, or
+an iOS simulator. Use development builds for production-grade native testing.
 
 ## Authentication
 
@@ -36,12 +37,31 @@ Expo Router protected routes expose the sign-in screen only while signed out and
 
 ## Navigation
 
-The authenticated shell contains Home, Care, Calendar, Family, and Settings. Home and sign-out are functional in this first slice; care, calendar, and family are prepared for their API-backed workflows.
+The authenticated shell contains Home, Care, Calendar, Family, and Kinlight AI.
+Settings remains available from Home. All primary tabs use the versioned API;
+the mobile client does not query application tables directly.
 
 ## Checks
 
 ```bash
+pnpm --filter @getkinlight.com/mobile format:check
 pnpm --filter @getkinlight.com/mobile lint
-pnpm --filter @getkinlight.com/mobile exec tsc --noEmit
-pnpm --filter @getkinlight.com/mobile exec expo export --platform web
+pnpm --filter @getkinlight.com/mobile typecheck
+pnpm --filter @getkinlight.com/mobile build
 ```
+
+The build command exports Android, iOS, and web bundles. Store-signed binaries
+still require the appropriate Apple or Google credentials in the release
+environment.
+
+Run the complete mobile release gate with:
+
+```bash
+pnpm --filter @getkinlight.com/mobile quality
+```
+
+`pnpm --filter @getkinlight.com/mobile doctor` is also available as an advisory
+check. With pnpm 10's required hoisted linker, Expo Doctor sees the web app's
+React 19.2 peer beneath `use-sync-external-store` and reports a duplicate. The
+mobile Metro config resolves every React import to Expo's supported React 19.1
+copy; Android, iOS, and web exports verify that resolution.

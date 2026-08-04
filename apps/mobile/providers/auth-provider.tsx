@@ -25,6 +25,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
     let supabase;
     try {
       supabase = getSupabaseClient();
@@ -33,13 +34,21 @@ export function AuthProvider({ children }: PropsWithChildren) {
       return;
     }
 
-    void supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setIsLoading(false);
-    });
+    void supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (active) setSession(data.session);
+      })
+      .catch(() => {
+        if (active) setSession(null);
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, nextSession) => {
+        if (!active) return;
         setSession(nextSession);
         setIsLoading(false);
       },
@@ -54,6 +63,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
           });
 
     return () => {
+      active = false;
       authListener.subscription.unsubscribe();
       appStateListener?.remove();
     };
