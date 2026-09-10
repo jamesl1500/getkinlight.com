@@ -139,4 +139,31 @@ describe("DailyAiBrief", () => {
       JSON.parse(String(vi.mocked(fetch).mock.calls[1][1]?.body)),
     ).toMatchObject({ refresh: true });
   });
+
+  it("renders without priorities or insights when the brief has none", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          action: "daily-brief",
+          data: { ...brief, priorities: [], insights: [] },
+        }),
+        { status: 200 },
+      ),
+    );
+    render(<DailyAiBrief householdId={householdId} />);
+    expect(await screen.findByText("Good morning")).toBeInTheDocument();
+    expect(screen.queryByText("Today’s priorities")).not.toBeInTheDocument();
+    expect(screen.queryByText("Confirm transport")).not.toBeInTheDocument();
+  });
+
+  it("shows a network error message when the fetch rejects", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("offline"));
+    render(<DailyAiBrief householdId={householdId} />);
+    expect(
+      await screen.findByText(
+        "Unable to reach Kinlight. Check your connection and try again.",
+      ),
+    ).toBeInTheDocument();
+  });
 });

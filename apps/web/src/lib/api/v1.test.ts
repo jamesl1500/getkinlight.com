@@ -82,6 +82,33 @@ describe("API v1 wrapper", () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
+  it("rejects oversized request bodies using the content-length header", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const response = await withApiV1(
+      handler,
+      policy("payload-header", 2, 5),
+    )(
+      new Request("http://localhost/api/v1/care", {
+        method: "POST",
+        headers: { "content-length": "1000" },
+        body: "too-large",
+      }),
+    );
+    expect(response.status).toBe(413);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("falls back to a generic message when the route response body is not JSON", async () => {
+    const response = await withApiV1(
+      async () => new Response("not json", { status: 400 }),
+      policy("bad-json"),
+    )(new Request("http://localhost/api/v1/care"));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      message: "Kinlight could not complete that request.",
+    });
+  });
+
   it("delegates bodyless writes to route validation", async () => {
     const handler = vi.fn(async () =>
       Response.json({ ok: false, message: "Invalid request" }, { status: 400 }),

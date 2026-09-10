@@ -181,4 +181,109 @@ describe("auth API route", () => {
       message: "Something went wrong. Please try again.",
     });
   });
+
+  it("signs in without a session and skips the profile lookup", async () => {
+    mocks.createClient.mockReturnValue({
+      auth: {
+        signInWithPassword: vi.fn(async () => ({
+          data: { session: null, user: null },
+          error: null,
+        })),
+      },
+    });
+    const response = await POST(
+      request({
+        mode: "sign-in",
+        email: "pat@example.com",
+        password: "password123",
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      ok: true,
+      session: null,
+      profile: null,
+    });
+  });
+
+  it("returns a stable error when sign-up fails", async () => {
+    mocks.createClient.mockReturnValue({
+      auth: {
+        signUp: vi.fn(async () => ({
+          data: { session: null, user: null },
+          error: { message: "Email already registered" },
+        })),
+      },
+    });
+    const response = await POST(
+      request({
+        mode: "sign-up",
+        email: "pat@example.com",
+        password: "password123",
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      message: "Email already registered",
+    });
+  });
+
+  it("returns a stable error when the password reset email fails", async () => {
+    mocks.createClient.mockReturnValue({
+      auth: {
+        resetPasswordForEmail: vi.fn(async () => ({
+          error: { message: "Unable to send email" },
+        })),
+      },
+    });
+    const response = await POST(
+      request({ mode: "forgot-password", email: "pat@example.com" }),
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      message: "Unable to send email",
+    });
+  });
+
+  it("returns a stable error when updating the password fails", async () => {
+    mocks.createClient.mockReturnValue({
+      auth: {
+        updateUser: vi.fn(async () => ({
+          data: { user: null },
+          error: { message: "Session expired" },
+        })),
+      },
+    });
+    const response = await POST(
+      request({
+        mode: "update-password",
+        accessToken: "access-token",
+        password: "newpassword123",
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      message: "Session expired",
+    });
+  });
+
+  it("skips the profile lookup when the updated user has no id", async () => {
+    mocks.createClient.mockReturnValue({
+      auth: {
+        updateUser: vi.fn(async () => ({
+          data: { user: null },
+          error: null,
+        })),
+      },
+    });
+    const response = await POST(
+      request({
+        mode: "update-password",
+        accessToken: "access-token",
+        password: "newpassword123",
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ ok: true, profile: null });
+  });
 });

@@ -1,12 +1,12 @@
 "use client";
 
 import { createBrowserApiClient } from "@/lib/api/client";
+import { captureAnalyticsEvent } from "@/lib/observability";
 import {
   OnboardingRequestSchema,
   createKinlightClient,
 } from "@getkinlight.com/shared";
 import type { OnboardingRole } from "@getkinlight.com/shared";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import styles from "./onboarding-flow.module.scss";
@@ -47,6 +47,10 @@ export function OnboardingFlow({ redirectTo }: { redirectTo: string }) {
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [role, setRole] = useState<OnboardingRole>("family-organizer");
+  const [householdName, setHouseholdName] = useState("");
+  const [householdId, setHouseholdId] = useState<string | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [invitationCreated, setInvitationCreated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -159,10 +163,16 @@ export function OnboardingFlow({ redirectTo }: { redirectTo: string }) {
       }
 
       if (redirectTo !== "/dashboard") {
+        captureAnalyticsEvent("onboarding_completed");
         router.replace(redirectTo);
         return;
       }
 
+      const family = await createBrowserApiClient().familyWorkspace.get();
+      setHouseholdId(family.selectedHousehold?.id ?? null);
+      setHouseholdName(
+        family.selectedHousehold?.name ?? `${firstName.trim()}'s Household`,
+      );
       setCurrentStep(4);
     } catch (submitError) {
       setError(
@@ -175,7 +185,54 @@ export function OnboardingFlow({ redirectTo }: { redirectTo: string }) {
     }
   }
 
-  const progressWidth = `${(currentStep / 4) * 100}%`;
+  async function handleActivateHousehold() {
+    if (!householdName.trim()) {
+      setError("Give your household a name before continuing.");
+      return;
+    }
+
+    setError(null);
+    setIsSaving(true);
+    try {
+      let activeHouseholdId = householdId;
+      if (!activeHouseholdId) {
+        const created = await createBrowserApiClient().family({
+          action: "create-household",
+          name: householdName,
+        });
+        activeHouseholdId = created.householdId ?? null;
+        if (!activeHouseholdId) throw new Error(created.message);
+        setHouseholdId(activeHouseholdId);
+        captureAnalyticsEvent("household_created");
+      }
+
+      if (inviteEmail.trim()) {
+        await createBrowserApiClient().family({
+          action: "invite-member",
+          householdId: activeHouseholdId,
+          email: inviteEmail,
+          role: "member",
+        });
+        setInvitationCreated(true);
+        captureAnalyticsEvent("invitation_created");
+      }
+
+      captureAnalyticsEvent("onboarding_completed", {
+        invitationCreated: Boolean(inviteEmail.trim()),
+      });
+      setCurrentStep(5);
+    } catch (activationError) {
+      setError(
+        activationError instanceof Error
+          ? activationError.message
+          : "Unable to finish your family space.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  const progressWidth = `${(currentStep / 5) * 100}%`;
 
   if (isLoading) {
     return (
@@ -208,7 +265,7 @@ export function OnboardingFlow({ redirectTo }: { redirectTo: string }) {
       {currentStep === 1 ? (
         <div className={styles.panel}>
           <div className={styles.panelBody}>
-            <p className={styles.eyebrow}>Step 1 of 4</p>
+            <p className={styles.eyebrow}>Step 1 of 5</p>
             <h1 className={styles.title}>Welcome to your family space.</h1>
             <p className={styles.copy}>
               Your email is confirmed{email ? ` for ${email}` : ""}. Next,
@@ -231,7 +288,7 @@ export function OnboardingFlow({ redirectTo }: { redirectTo: string }) {
       {currentStep === 2 ? (
         <div className={styles.panel}>
           <div className={styles.panelBody}>
-            <p className={styles.eyebrow}>Step 2 of 4</p>
+            <p className={styles.eyebrow}>Step 2 of 5</p>
             <h1 className={styles.title}>Tell your family who you are.</h1>
             <p className={styles.copy}>
               These details become your starting profile and help make future
@@ -295,7 +352,7 @@ export function OnboardingFlow({ redirectTo }: { redirectTo: string }) {
       {currentStep === 3 ? (
         <div className={styles.panel}>
           <div className={styles.panelBody}>
-            <p className={styles.eyebrow}>Step 3 of 4</p>
+            <p className={styles.eyebrow}>Step 3 of 5</p>
             <h1 className={styles.title}>
               Choose how you show up in Kinlight.
             </h1>
@@ -361,25 +418,90 @@ export function OnboardingFlow({ redirectTo }: { redirectTo: string }) {
       ) : null}
 
       {currentStep === 4 ? (
+        <div className={styles.panel}>
+          <div className={styles.panelBody}>
+            <p className={styles.eyebrow}>Step 4 of 5</p>
+            <h1 className={styles.title}>Bring your family space to life.</h1>
+            <p className={styles.copy}>
+              Name the household everyone will share, then invite one person now
+              or add them later from Family.
+            </p>
+            <div className={styles.fieldGrid}>
+              <label className={`${styles.field} ${styles.fieldFull}`}>
+                <span className={styles.label}>Household name</span>
+                <input
+                  className={styles.input}
+                  value={householdName}
+                  onChange={(event) => setHouseholdName(event.target.value)}
+                />
+              </label>
+              <label className={`${styles.field} ${styles.fieldFull}`}>
+                <span className={styles.label}>
+                  Family member email (optional)
+                </span>
+                <input
+                  className={styles.input}
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(event) => setInviteEmail(event.target.value)}
+                  placeholder="family@example.com"
+                />
+              </label>
+            </div>
+            {error ? <p className={styles.message}>{error}</p> : null}
+            <div className={styles.actions}>
+              <button
+                type="button"
+                className={styles.secondary}
+                onClick={() => setCurrentStep(3)}
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                className={styles.primary}
+                onClick={() => void handleActivateHousehold()}
+                disabled={isSaving}
+              >
+                {isSaving
+                  ? "Preparing your space..."
+                  : inviteEmail.trim()
+                    ? "Create space and invitation"
+                    : "Create my family space"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {currentStep === 5 ? (
         <div className={`${styles.panel} ${styles.successPanel}`}>
           <div className={styles.panelBody}>
-            <p className={styles.eyebrow}>Step 4 of 4</p>
-            <h1 className={styles.title}>Your Kinlight space is ready.</h1>
+            <p className={styles.eyebrow}>Step 5 of 5</p>
+            <h1 className={styles.title}>Your family space is ready.</h1>
             <p className={styles.copy}>
-              Your profile is saved and your account is fully set up. You can
-              head back to the site now and keep building the experience from
-              there.
+              {invitationCreated
+                ? "Your invitation is waiting in Family, ready to share securely."
+                : "You can invite family whenever you are ready from the Family tab."}
             </p>
             <p className={styles.stepMeta}>
-              You can update these details later from your account settings.
+              Start with today&apos;s care plan or add the people you support.
             </p>
             <div className={styles.actions}>
-              <Link href="/" className={styles.primary}>
-                Go to home
-              </Link>
-              <Link href="/features" className={styles.secondary}>
-                Explore features
-              </Link>
+              <button
+                type="button"
+                className={styles.primary}
+                onClick={() => router.replace("/dashboard")}
+              >
+                Open dashboard
+              </button>
+              <button
+                type="button"
+                className={styles.secondary}
+                onClick={() => router.replace("/family")}
+              >
+                Open Family
+              </button>
             </div>
           </div>
         </div>

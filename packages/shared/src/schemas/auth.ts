@@ -61,3 +61,15 @@ export const AuthResponseSchema = z.object({
 });
 
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;
+
+export const DeleteAccountRequestSchema = z.object({
+  confirmation: z.literal("DELETE"),
+});
+
+export const DeleteAccountResponseSchema = z.object({
+  ok: z.boolean(),
+  message: z.string(),
+});
+
+export type DeleteAccountRequest = z.infer<typeof DeleteAccountRequestSchema>;
+export type DeleteAccountResponse = z.infer<typeof DeleteAccountResponseSchema>;

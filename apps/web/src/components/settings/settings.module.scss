@@ -392,6 +392,73 @@
   color: #a24242;
 }
 
+.dangerZone {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(162, 66, 66, 0.28);
+  border-radius: 7px;
+  background: rgba(255, 245, 244, 0.68);
+}
+
+.dangerZone h3,
+.dangerZone p {
+  margin: 0;
+}
+
+.dangerZone h3 {
+  color: #7f3030;
+  font-family: var(--font-headline), Georgia, serif;
+  letter-spacing: 0;
+}
+
+.dangerZone p {
+  margin-top: 0.3rem;
+  color: #765f61;
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+.dangerZone label {
+  display: grid;
+  gap: 0.4rem;
+  color: #663f42;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.dangerZone input {
+  min-height: 2.7rem;
+  border: 1px solid rgba(162, 66, 66, 0.3);
+  border-radius: 6px;
+  padding: 0.65rem 0.75rem;
+  background: rgba(255, 255, 255, 0.8);
+  font: inherit;
+}
+
+.dangerZone button {
+  width: fit-content;
+  min-height: 2.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 0;
+  border-radius: 7px;
+  padding: 0.65rem 0.9rem;
+  color: #fff;
+  background: #a24242;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.dangerZone button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 @media (max-width: 920px) {
   .settingsLayout {
     grid-template-columns: 1fr;

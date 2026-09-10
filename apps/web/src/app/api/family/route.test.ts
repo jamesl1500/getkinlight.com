@@ -169,6 +169,28 @@ describe("family API route", () => {
     });
   });
 
+  it("creates an owned household for onboarding", async () => {
+    const supabase = createSupabaseMock({
+      households: { data: { id: householdId }, error: null },
+    });
+    mocks.createClient.mockReturnValue(supabase.client);
+    const response = await POST(
+      request({ action: "create-household", name: "The Kinlight Family" }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      ok: true,
+      message: "Your household is ready.",
+      invitationToken: null,
+      householdId,
+    });
+    expect(supabase.calls).toContainEqual({
+      source: "households",
+      method: "insert",
+      args: [{ name: "The Kinlight Family", created_by: "user-1" }],
+    });
+  });
+
   it("creates an invitation with a client-safe token", async () => {
     const supabase = createSupabaseMock({
       "rpc:get_household_member_directory": { data: [], error: null },

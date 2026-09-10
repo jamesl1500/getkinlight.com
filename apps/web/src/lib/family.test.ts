@@ -125,4 +125,32 @@ describe("getFamilyWorkspaceData", () => {
     );
     await expect(getFamilyWorkspaceData()).rejects.toBe(memberError);
   });
+
+  it("returns a null role when the current user is not a household member", async () => {
+    const { client } = createSupabaseMock({
+      households: {
+        data: [{ id: "h1", name: "Family", created_at: "now" }],
+        error: null,
+      },
+      "rpc:get_household_member_directory": {
+        data: [
+          {
+            member_id: "m1",
+            user_id: "someone-else",
+            role: "owner",
+            first_name: null,
+            last_name: null,
+            username: null,
+            email: null,
+            joined_at: "2026-01-01",
+          },
+        ],
+        error: null,
+      },
+      household_invitations: { data: [], error: null },
+      care_recipients: { data: [], error: null },
+    });
+    const data = await getFamilyWorkspaceData(undefined, client as never);
+    expect(data.currentUserRole).toBeNull();
+  });
 });

@@ -1,4 +1,8 @@
-export type QueryResult = { data: unknown; error: unknown };
+export type QueryResult = {
+  data: unknown;
+  error: unknown;
+  count?: number | null;
+};
 
 type QueryBuilder = {
   select: (...args: unknown[]) => QueryBuilder;
@@ -11,6 +15,7 @@ type QueryBuilder = {
   gte: (...args: unknown[]) => QueryBuilder;
   lte: (...args: unknown[]) => QueryBuilder;
   lt: (...args: unknown[]) => QueryBuilder;
+  in: (...args: unknown[]) => QueryBuilder;
   or: (...args: unknown[]) => QueryBuilder;
   is: (...args: unknown[]) => QueryBuilder;
   order: (...args: unknown[]) => QueryBuilder;
@@ -46,6 +51,7 @@ export function createSupabaseMock(
       "gte",
       "lte",
       "lt",
+      "in",
       "or",
       "is",
       "order",

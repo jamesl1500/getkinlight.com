@@ -4,7 +4,9 @@ import styles from "./site-header.module.scss";
 const links = [
   { href: "/", label: "Home" },
   { href: "/features", label: "Features" },
+  { href: "/how-it-works", label: "How it works" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/about", label: "About" },
 ];
 
 export function SiteHeader() {

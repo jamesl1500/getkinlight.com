@@ -231,4 +231,33 @@ describe("care schedule", () => {
       args: ["starts_at", "2026-08-03T00:00:00.000Z"],
     });
   });
+
+  it("returns no items when every table returns null data", async () => {
+    mocks.results.set("household_events", { data: null as never });
+    mocks.results.set("appointments", { data: null as never });
+    mocks.results.set("medication_reminders", { data: null as never });
+    mocks.results.set("eating_reminders", { data: null as never });
+
+    const items = await getCareScheduleForRange(
+      new Date("2026-08-02T00:00:00.000Z"),
+      new Date("2026-08-03T00:00:00.000Z"),
+    );
+
+    expect(items).toEqual([]);
+  });
+
+  it("throws the first available query error", async () => {
+    const appointmentsError = new Error("appointments failed");
+    mocks.results.set("appointments", {
+      data: undefined as never,
+      error: appointmentsError,
+    } as never);
+
+    await expect(
+      getCareScheduleForRange(
+        new Date("2026-08-02T00:00:00.000Z"),
+        new Date("2026-08-03T00:00:00.000Z"),
+      ),
+    ).rejects.toBe(appointmentsError);
+  });
 });

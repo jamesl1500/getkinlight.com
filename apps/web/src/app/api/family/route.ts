@@ -18,12 +18,14 @@ function response(
   message: string,
   status: number,
   invitationToken: string | null = null,
+  householdId: string | null = null,
 ) {
   return NextResponse.json(
     FamilyMutationResponseSchema.parse({
       ok: status < 400,
       message,
       invitationToken,
+      ...(householdId ? { householdId } : {}),
     }),
     { status },
   );
@@ -83,6 +85,16 @@ export async function POST(request: Request) {
     return response("Your session has expired.", 401);
 
   const input = body.data;
+
+  if (input.action === "create-household") {
+    const { data, error } = await supabase
+      .from("households")
+      .insert({ name: input.name, created_by: userData.user.id })
+      .select("id")
+      .single();
+    if (error || !data) return mutationError(error);
+    return response("Your household is ready.", 200, null, data.id);
+  }
 
   if (input.action === "accept-invitation") {
     const { error } = await supabase.rpc("accept_household_invitation", {

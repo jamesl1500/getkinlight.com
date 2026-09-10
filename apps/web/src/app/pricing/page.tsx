@@ -1,92 +1,141 @@
+import type { Metadata } from "next";
+import { Check } from "lucide-react";
 import Link from "next/link";
-import styles from "../../styles/ui.module.scss";
+
+import { MarketingPage } from "@/components/marketing/decor";
+import styles from "@/styles/pages/marketing/marketing.module.scss";
+
+export const metadata: Metadata = {
+  title: "Pricing",
+  description:
+    "Start free while your family explores Kinlight, then upgrade when you need more households and deeper collaboration.",
+};
 
 const plans = [
   {
-    accent: "SF",
-    delay: "reveal-delay-1",
     name: "Starter Family",
     price: "$0",
-    period: "/month",
-    details: [
+    period: "forever",
+    featured: false,
+    cta: { href: "/auth/sign-up", label: "Create free account" },
+    features: [
       "1 household",
       "Up to 5 members",
-      "Core timeline and profile access",
+      "Care timeline, schedule & tasks",
+      "Supply list and household messages",
     ],
   },
   {
-    accent: "FP",
-    delay: "reveal-delay-2",
     name: "Family Plus",
     price: "$12",
-    period: "/month",
-    details: [
+    period: "/ month",
+    featured: true,
+    cta: { href: "/auth/sign-up", label: "Start Family Plus" },
+    features: [
       "Up to 3 households",
-      "Advanced reminders",
-      "Priority support and exports",
+      "Unlimited members",
+      "Advanced reminders & scheduling",
+      "Kinlight AI daily brief",
+      "Priority support and data exports",
     ],
   },
   {
-    accent: "CC",
-    delay: "reveal-delay-3",
     name: "Care Circle",
     price: "Custom",
     period: "",
-    details: ["Larger groups", "Custom onboarding", "White-glove migration"],
+    featured: false,
+    cta: { href: "/contact", label: "Talk to us" },
+    features: [
+      "Larger groups and care teams",
+      "Custom onboarding",
+      "White-glove migration",
+      "Dedicated point of contact",
+    ],
   },
 ];
 
 export default function PricingPage() {
   return (
-    <div className={styles.pageStack}>
-      <main
-        className={`${styles.pageContainer} mt-6 space-y-5 md:mt-8 md:space-y-8`}
+    <MarketingPage>
+      <section
+        className={styles.hero}
+        style={{ gridTemplateColumns: "1fr", textAlign: "center" }}
       >
-        <section className={`${styles.glassCard} ${styles.heroPanel}`}>
-          <div className={`${styles.heroCopy} ${styles.fadeUp}`}>
-            <p className={styles.heroPill}>Pricing</p>
-            <h1 className={styles.sectionTitle}>Simple plans for real life</h1>
-            <p className={styles.sectionCopy}>
-              Start free while your family explores Kinlight, then upgrade when
-              you need more space and deeper collaboration.
-            </p>
-          </div>
-        </section>
+        <div
+          className={`${styles.heroCopy} ${styles.reveal}`}
+          style={{ marginInline: "auto", alignItems: "center" }}
+        >
+          <p className={styles.eyebrow}>
+            <span className={styles.eyebrowDot} aria-hidden />
+            Pricing
+          </p>
+          <h1 className={styles.display}>Simple plans for real life</h1>
+          <p className={styles.lead} style={{ marginInline: "auto" }}>
+            Start free while your family explores Kinlight, then upgrade when
+            you need more space and deeper collaboration. No lock-in, cancel any
+            time.
+          </p>
+        </div>
+      </section>
 
-        <section className={styles.planGrid}>
-          {plans.map((plan) => (
+      <section>
+        <div className={styles.planGrid}>
+          {plans.map((plan, i) => (
             <article
               key={plan.name}
-              className={`${styles.glassCard} ${styles.planCard} ${styles.fadeUp} ${styles[plan.delay as keyof typeof styles]}`}
+              className={`${styles.card} ${styles.plan} ${
+                plan.featured ? styles.planFeatured : ""
+              } ${styles.reveal} ${styles[`d${(i % 3) + 1}` as keyof typeof styles]}`}
             >
-              <span className={styles.iconAccent}>{plan.accent}</span>
-              <p className="text-sm font-medium text-ink-soft">{plan.name}</p>
-              <p className={`${styles.priceValue} mt-2 text-4xl`}>
+              {plan.featured ? (
+                <span className={styles.planTag}>Most chosen</span>
+              ) : null}
+              <p className={styles.planName}>{plan.name}</p>
+              <p className={styles.planPrice}>
                 {plan.price}
-                <span className="ml-1 text-base text-ink-soft">
-                  {plan.period}
-                </span>
+                {plan.period ? (
+                  <span className={styles.planPeriod}>{plan.period}</span>
+                ) : null}
               </p>
-              <ul className="mt-5 space-y-2 text-sm leading-7 text-ink-soft">
-                {plan.details.map((item) => (
-                  <li key={item}>• {item}</li>
+              <ul className={styles.planList}>
+                {plan.features.map((feature) => (
+                  <li key={feature}>
+                    <Check size={16} aria-hidden />
+                    {feature}
+                  </li>
                 ))}
               </ul>
+              <div className={styles.planCta}>
+                <Link
+                  href={plan.cta.href}
+                  className={
+                    plan.featured ? styles.btnPrimary : styles.btnGhost
+                  }
+                >
+                  {plan.cta.label}
+                </Link>
+              </div>
             </article>
           ))}
-        </section>
+        </div>
+      </section>
 
-        <section className={`${styles.glassCard} ${styles.ctaPanel}`}>
-          <div className={styles.ctaActions}>
-            <h2 className={styles.sectionTitle}>
-              Create your free account today
-            </h2>
-            <Link href="/auth/sign-up" className={styles.buttonPrimary}>
-              Get started
+      <section>
+        <div className={`${styles.card} ${styles.cta} ${styles.reveal}`}>
+          <span className={styles.ctaGlow} aria-hidden />
+          <h2 className={styles.title}>Every plan includes the essentials</h2>
+          <p className={styles.prose}>
+            Private, household-scoped data. Optional, off-by-default analytics.
+            Account deletion whenever you want it. The free plan is genuinely
+            useful on its own — upgrade only when your family outgrows it.
+          </p>
+          <div className={styles.actions}>
+            <Link href="/faq" className={styles.btnGhost}>
+              Read common questions
             </Link>
           </div>
-        </section>
-      </main>
-    </div>
+        </div>
+      </section>
+    </MarketingPage>
   );
 }

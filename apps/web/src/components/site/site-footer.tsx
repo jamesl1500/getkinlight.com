@@ -10,16 +10,16 @@ export function SiteFooter() {
       label: "Company",
       links: [
         { href: "/", label: "Home" },
-        { href: "/features", label: "About" },
-        { href: "/features", label: "Services" },
+        { href: "/about", label: "About" },
+        { href: "/how-it-works", label: "How it works" },
       ],
     },
     {
       label: "Resources",
       links: [
-        { href: "/pricing", label: "Plans" },
-        { href: "/features", label: "Resources" },
-        { href: "/auth/sign-up", label: "Join Us" },
+        { href: "/features", label: "Features" },
+        { href: "/pricing", label: "Pricing" },
+        { href: "/faq", label: "FAQ" },
       ],
     },
     {
@@ -27,7 +27,7 @@ export function SiteFooter() {
       links: [
         { href: "/auth/sign-in", label: "Sign in" },
         { href: "/auth/sign-up", label: "Create account" },
-        { href: "/auth/forgot-password", label: "Reset password" },
+        { href: "/contact", label: "Contact" },
       ],
     },
   ];
@@ -76,15 +76,15 @@ export function SiteFooter() {
               &copy; {currentYear} {siteName}. All rights reserved.
             </p>
             <div className={styles.legalLinks}>
-              <a href="#" className={styles.legalLink}>
+              <Link href="/terms" className={styles.legalLink}>
                 Terms of Use
-              </a>
-              <a href="#" className={styles.legalLink}>
+              </Link>
+              <Link href="/privacy" className={styles.legalLink}>
                 Privacy Notice
-              </a>
-              <a href="#" className={styles.legalLink}>
+              </Link>
+              <Link href="/cookies" className={styles.legalLink}>
                 Cookie Policy
-              </a>
+              </Link>
             </div>
           </div>
         </div>

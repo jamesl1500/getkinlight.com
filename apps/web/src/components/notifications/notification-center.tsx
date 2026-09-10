@@ -1,5 +1,6 @@
 "use client";
 
+import { createBrowserApiClient } from "@/lib/api/client";
 import {
   ActivityTypeSchema,
   HouseholdActivitySchema,
@@ -76,38 +77,14 @@ export function NotificationCenter({ userId }: { userId: string }) {
     const supabase = createKinlightClient();
 
     async function loadActivities() {
-      const { data, error } = await supabase
-        .from("household_activity")
-        .select(
-          "id, household_id, actor_user_id, activity_type, title, body, resource_type, resource_id, href, created_at",
-        )
-        .order("created_at", { ascending: false })
-        .limit(40);
-      if (error || !data) {
+      try {
+        const response = await createBrowserApiClient().notifications.get();
+        setActivities(response.activities);
+      } catch {
+        setActivities([]);
+      } finally {
         setIsLoading(false);
-        return;
       }
-
-      const ids = data.map((row) => row.id);
-      const { data: reads } = ids.length
-        ? await supabase
-            .from("notification_reads")
-            .select("activity_id, read_at")
-            .in("activity_id", ids)
-        : { data: [] };
-      const readTimes = new Map(
-        (reads ?? []).map((read) => [read.activity_id, read.read_at]),
-      );
-      setActivities(
-        data.map((row) =>
-          toActivity(
-            row as ActivityRow,
-            readTimes.get(row.id) ??
-              (row.actor_user_id === userId ? row.created_at : null),
-          ),
-        ),
-      );
-      setIsLoading(false);
     }
 
     void loadActivities();
@@ -170,30 +147,26 @@ export function NotificationCenter({ userId }: { userId: string }) {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [isOpen]);
 
-  async function markRead(activityIds: string[]) {
-    if (!activityIds.length) return;
+  async function markRead(activityId?: string) {
     const readAt = new Date().toISOString();
-    const supabase = createKinlightClient();
-    const { error } = await supabase.from("notification_reads").upsert(
-      activityIds.map((activityId) => ({
-        activity_id: activityId,
-        user_id: userId,
-        read_at: readAt,
-      })),
-      { onConflict: "activity_id,user_id" },
-    );
-    if (!error) {
-      const idSet = new Set(activityIds);
+    try {
+      await createBrowserApiClient().notifications.markRead(
+        activityId
+          ? { action: "mark-read", activityId }
+          : { action: "mark-all-read" },
+      );
       setActivities((current) =>
         current.map((activity) =>
-          idSet.has(activity.id) ? { ...activity, readAt } : activity,
+          !activityId || activity.id === activityId
+            ? { ...activity, readAt }
+            : activity,
         ),
       );
-    }
+    } catch {}
   }
 
   async function openActivity(activity: HouseholdActivity) {
-    await markRead([activity.id]);
+    await markRead(activity.id);
     setIsOpen(false);
     if (activity.href) router.push(activity.href);
   }
@@ -249,13 +222,7 @@ export function NotificationCenter({ userId }: { userId: string }) {
                     <button
                       type="button"
                       className={styles.actionButton}
-                      onClick={() =>
-                        void markRead(
-                          activities
-                            .filter((activity) => !activity.readAt)
-                            .map((activity) => activity.id),
-                        )
-                      }
+                      onClick={() => void markRead()}
                       title="Mark all as read"
                     >
                       <CheckCheck size={17} aria-hidden />

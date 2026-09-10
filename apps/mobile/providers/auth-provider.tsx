@@ -14,8 +14,11 @@ import { getSupabaseClient } from "@/lib/supabase";
 type AuthContextValue = {
   session: Session | null;
   isLoading: boolean;
+  isActivationLoading: boolean;
+  onboardingRequired: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshActivationStatus: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -23,6 +26,8 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isActivationLoading, setIsActivationLoading] = useState(false);
+  const [onboardingRequired, setOnboardingRequired] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -69,6 +74,36 @@ export function AuthProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
+  async function refreshActivationStatus() {
+    setIsActivationLoading(true);
+    try {
+      const [onboarding, family] = await Promise.all([
+        createMobileApiClient().onboarding.get(),
+        createMobileApiClient().familyWorkspace.get(),
+      ]);
+      const profile = onboarding.profile;
+      setOnboardingRequired(
+        !profile?.first_name ||
+          !profile.last_name ||
+          !profile.username ||
+          !profile.role ||
+          !family.selectedHousehold,
+      );
+    } catch {
+      setOnboardingRequired(true);
+    } finally {
+      setIsActivationLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (session) void refreshActivationStatus();
+    else {
+      setOnboardingRequired(false);
+      setIsActivationLoading(false);
+    }
+  }, [session]);
+
   async function signIn(email: string, password: string) {
     const result = await createMobileApiClient().auth({
       mode: "sign-in",
@@ -92,7 +127,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }
 
   return (
-    <AuthContext value={{ session, isLoading, signIn, signOut }}>
+    <AuthContext
+      value={{
+        session,
+        isLoading,
+        isActivationLoading,
+        onboardingRequired,
+        signIn,
+        signOut,
+        refreshActivationStatus,
+      }}
+    >
       {children}
     </AuthContext>
   );

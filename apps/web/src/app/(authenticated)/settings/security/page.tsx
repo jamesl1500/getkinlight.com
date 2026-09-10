@@ -1,3 +1,4 @@
+import { AccountDeletionForm } from "@/components/settings/account-deletion-form";
 import { SecuritySettingsForm } from "@/components/settings/security-settings-form";
 import styles from "@/components/settings/settings.module.scss";
 import { createKinlightServerComponentClient } from "@/lib/supabase/server";
@@ -70,6 +71,7 @@ export default async function SecuritySettingsPage() {
         </p>
       </div>
       <SecuritySettingsForm />
+      <AccountDeletionForm />
     </section>
   );
 }

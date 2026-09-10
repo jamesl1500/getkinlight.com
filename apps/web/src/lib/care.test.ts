@@ -169,4 +169,103 @@ describe("getCareWorkspaceData", () => {
     );
     await expect(getCareWorkspaceData()).rejects.toBe(relatedError);
   });
+
+  it("throws when a later related query fails", async () => {
+    const notesError = new Error("notes failed");
+    mocks.createClient.mockResolvedValue(
+      createSupabaseMock({
+        care_recipients: {
+          data: [
+            {
+              id: "r1",
+              household_id: "h1",
+              first_name: "A",
+              last_name: "B",
+              preferred_name: null,
+              date_of_birth: null,
+              relationship: null,
+              care_preferences: null,
+              is_active: true,
+            },
+          ],
+          error: null,
+        },
+        household_notes: { data: null, error: notesError },
+      }).client,
+    );
+    await expect(getCareWorkspaceData()).rejects.toBe(notesError);
+  });
+
+  it("falls back to the first active recipient when no id is requested", async () => {
+    const { client } = createSupabaseMock({
+      households: { data: [{ id: "h1", name: "Family" }], error: null },
+      care_recipients: {
+        data: [
+          {
+            id: "r1",
+            household_id: "h1",
+            first_name: "Inactive",
+            last_name: "One",
+            preferred_name: null,
+            date_of_birth: null,
+            relationship: null,
+            care_preferences: null,
+            is_active: false,
+          },
+          {
+            id: "r2",
+            household_id: "h1",
+            first_name: "Active",
+            last_name: "Two",
+            preferred_name: null,
+            date_of_birth: null,
+            relationship: null,
+            care_preferences: null,
+            is_active: true,
+          },
+        ],
+        error: null,
+      },
+    });
+    mocks.createClient.mockResolvedValue(client);
+    mocks.schedule.mockResolvedValue([]);
+
+    const data = await getCareWorkspaceData();
+    expect(data.selectedRecipient).toMatchObject({ id: "r2" });
+  });
+
+  it("defaults every collection to an empty array when Supabase returns null data", async () => {
+    const { client } = createSupabaseMock({
+      households: { data: null, error: null },
+      care_recipients: {
+        data: [
+          {
+            id: "r1",
+            household_id: "h1",
+            first_name: "A",
+            last_name: "B",
+            preferred_name: null,
+            date_of_birth: null,
+            relationship: null,
+            care_preferences: null,
+            is_active: true,
+          },
+        ],
+        error: null,
+      },
+      medication_reminders: { data: null, error: null },
+      eating_reminders: { data: null, error: null },
+      household_check_ins: { data: null, error: null },
+      household_notes: { data: null, error: null },
+    });
+    mocks.createClient.mockResolvedValue(client);
+    mocks.schedule.mockResolvedValue([]);
+
+    const data = await getCareWorkspaceData("r1");
+    expect(data.households).toEqual([]);
+    expect(data.medications).toEqual([]);
+    expect(data.eatingReminders).toEqual([]);
+    expect(data.checkIns).toEqual([]);
+    expect(data.notes).toEqual([]);
+  });
 });

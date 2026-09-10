@@ -81,18 +81,51 @@ describe("care schedule API route", () => {
 
   it("rejects unauthenticated, invalid, expired, and oversized ranges", async () => {
     const endpoint = "http://localhost/api/care-schedule";
-    expect((await GET(new Request(`${endpoint}?start=2026-08-01&end=2026-08-02`))).status).toBe(401);
-    expect((await GET(new Request(`${endpoint}?start=2026-02-30&end=2026-03-02`, { headers: { authorization: "Bearer token" } }))).status).toBe(400);
-    expect((await GET(new Request(`${endpoint}?start=2026-08-01&end=2026-09-13`, { headers: { authorization: "Bearer token" } }))).status).toBe(400);
+    expect(
+      (await GET(new Request(`${endpoint}?start=2026-08-01&end=2026-08-02`)))
+        .status,
+    ).toBe(401);
+    expect(
+      (
+        await GET(
+          new Request(`${endpoint}?start=2026-02-30&end=2026-03-02`, {
+            headers: { authorization: "Bearer token" },
+          }),
+        )
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await GET(
+          new Request(`${endpoint}?start=2026-08-01&end=2026-09-13`, {
+            headers: { authorization: "Bearer token" },
+          }),
+        )
+      ).status,
+    ).toBe(400);
 
-    const expired = createSupabaseMock({}, { data: { user: null }, error: new Error("expired") });
+    const expired = createSupabaseMock(
+      {},
+      { data: { user: null }, error: new Error("expired") },
+    );
     mocks.createClient.mockReturnValue(expired.client);
-    expect((await GET(new Request(`${endpoint}?start=2026-08-01&end=2026-08-02`, { headers: { authorization: "Bearer token" } }))).status).toBe(401);
+    expect(
+      (
+        await GET(
+          new Request(`${endpoint}?start=2026-08-01&end=2026-08-02`, {
+            headers: { authorization: "Bearer token" },
+          }),
+        )
+      ).status,
+    ).toBe(401);
   });
 
   it("returns a safe error when calendar data cannot be loaded", async () => {
     const supabase = createSupabaseMock({
-      household_events: { data: null, error: new Error("database unavailable") },
+      household_events: {
+        data: null,
+        error: new Error("database unavailable"),
+      },
     });
     mocks.createClient.mockReturnValue(supabase.client);
     const response = await GET(
@@ -211,6 +244,26 @@ describe("care schedule API route", () => {
     },
   );
 
+  it("creates a household-wide event with no recipient", async () => {
+    const supabase = createSupabaseMock({
+      household_events: { data: { id: sourceId }, error: null },
+    });
+    mocks.createClient.mockReturnValue(supabase.client);
+    const response = await POST(
+      request("POST", {
+        type: "event",
+        householdId,
+        title: "Visit",
+        date: "2026-08-03",
+        time: "14:00",
+        isAllDay: true,
+      }),
+    );
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.item).toMatchObject({ recipientId: null, recipientName: null });
+  });
+
   it("updates a family event and returns a normalized item", async () => {
     const supabase = createSupabaseMock({
       household_events: { data: { id: sourceId }, error: null },
@@ -263,6 +316,51 @@ describe("care schedule API route", () => {
     expect(response.status).toBe(403);
     expect(await response.json()).toMatchObject({
       message: "You cannot edit this family event.",
+    });
+  });
+
+  it("rejects unauthenticated, malformed, and expired PATCH requests", async () => {
+    expect((await PATCH(request("PATCH", {}, ""))).status).toBe(401);
+    expect((await PATCH(request("PATCH", { eventId: sourceId }))).status).toBe(
+      400,
+    );
+    const expired = createSupabaseMock(
+      {},
+      { data: { user: null }, error: new Error("expired") },
+    );
+    mocks.createClient.mockReturnValue(expired.client);
+    const response = await PATCH(
+      request("PATCH", {
+        eventId: sourceId,
+        householdId,
+        title: "Updated visit",
+        date: "2026-08-04",
+        time: "09:30",
+        isAllDay: false,
+      }),
+    );
+    expect(response.status).toBe(401);
+  });
+
+  it("updates a household-wide event with no recipient", async () => {
+    const supabase = createSupabaseMock({
+      household_events: { data: { id: sourceId }, error: null },
+      households: { data: { name: "Family" }, error: null },
+    });
+    mocks.createClient.mockReturnValue(supabase.client);
+    const response = await PATCH(
+      request("PATCH", {
+        eventId: sourceId,
+        householdId,
+        title: "Updated visit",
+        date: "2026-08-04",
+        time: "09:30",
+        isAllDay: false,
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      item: { recipientName: null },
     });
   });
 });

@@ -1,4 +1,5 @@
 const path = require("node:path");
+const { withSentryConfig } = require("@sentry/react-native/metro");
 const { getDefaultConfig } = require("expo/metro-config");
 
 const config = getDefaultConfig(__dirname);
@@ -22,4 +23,12 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform);
 };
 
-module.exports = config;
+const sentryBuildConfigured =
+  Boolean(process.env.SENTRY_ORG) && Boolean(process.env.SENTRY_PROJECT);
+
+module.exports = sentryBuildConfigured
+  ? withSentryConfig(config, {
+      annotateReactComponents: false,
+      includeWebReplay: false,
+    })
+  : config;

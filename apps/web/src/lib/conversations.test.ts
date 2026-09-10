@@ -184,4 +184,51 @@ describe("getConversationWorkspaceData", () => {
       await expect(getConversationWorkspaceData()).rejects.toBe(error);
     }
   });
+
+  it("falls back to the requester's email when they are not in the member directory", async () => {
+    const { client } = createSupabaseMock(
+      {
+        households: {
+          data: [{ id: householdId, name: "Family" }],
+          error: null,
+        },
+        household_conversations: {
+          data: {
+            id: conversationId,
+            household_id: householdId,
+            title: "Household",
+            is_default: true,
+            created_at: "2026-08-01T00:00:00.000Z",
+            updated_at: "2026-08-01T00:00:00.000Z",
+          },
+          error: null,
+        },
+        "rpc:get_household_member_directory": {
+          data: [
+            {
+              user_id: "00000000-0000-4000-8000-000000000099",
+              first_name: null,
+              last_name: null,
+              username: null,
+              email: "robin@example.com",
+            },
+          ],
+          error: null,
+        },
+        household_messages: { data: [], error: null },
+      },
+      { data: { user: { id: userId, email: "jamie@example.com" } }, error: null },
+    );
+    mocks.createClient.mockResolvedValue(client);
+
+    const data = await getConversationWorkspaceData();
+
+    expect(data.currentUserName).toBe("jamie@example.com");
+    expect(data.members).toEqual([
+      {
+        userId: "00000000-0000-4000-8000-000000000099",
+        displayName: "robin@example.com",
+      },
+    ]);
+  });
 });
