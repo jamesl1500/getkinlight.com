@@ -17,9 +17,9 @@ export function AuthFooter() {
       { href: "/auth/forgot-password", label: "Reset password" },
     ],
     [
-      { href: "#", label: "Help" },
-      { href: "#", label: "Privacy" },
-      { href: "#", label: "Terms" },
+      { href: "mailto:support@getkinlight.com", label: "Help" },
+      { href: "/privacy", label: "Privacy" },
+      { href: "/terms", label: "Terms" },
     ],
   ];
 
@@ -63,15 +63,15 @@ export function AuthFooter() {
               &copy; {currentYear} {siteName}. All rights reserved.
             </p>
             <div className={styles.legalLinks}>
-              <a href="#" className={styles.legalLink}>
+              <Link href="/terms" className={styles.legalLink}>
                 Terms of Use
-              </a>
-              <a href="#" className={styles.legalLink}>
+              </Link>
+              <Link href="/privacy" className={styles.legalLink}>
                 Privacy Notice
-              </a>
-              <a href="#" className={styles.legalLink}>
+              </Link>
+              <Link href="/cookies" className={styles.legalLink}>
                 Cookie Policy
-              </a>
+              </Link>
             </div>
           </div>
         </div>

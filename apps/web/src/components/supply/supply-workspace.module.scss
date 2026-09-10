@@ -1,0 +1,236 @@
+.page {
+  width: min(100%, 60rem);
+  margin-inline: auto;
+  color: #17394c;
+}
+.emptyPage {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  margin-top: 4rem;
+  text-align: center;
+  color: #61798b;
+}
+.pageHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+.pageHeader p {
+  margin: 0;
+  color: #6a808d;
+  font-size: 0.68rem;
+  font-weight: 780;
+  text-transform: uppercase;
+}
+.pageHeader h1 {
+  margin: 0.42rem 0 0;
+  color: #11314a;
+  font-family: var(--font-headline), Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3.1rem);
+  font-weight: 600;
+  line-height: 1.08;
+}
+.pageHeader > div > span {
+  display: block;
+  max-width: 38rem;
+  margin-top: 0.6rem;
+  color: #61798b;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.householdPicker {
+  display: grid;
+  gap: 0.3rem;
+}
+.householdPicker span {
+  color: #61798b;
+  font-size: 0.62rem;
+  font-weight: 720;
+  text-transform: uppercase;
+}
+.householdPicker select {
+  min-width: 11rem;
+  border: 1px solid rgba(65, 105, 117, 0.2);
+  border-radius: 6px;
+  padding: 0.7rem 0.75rem;
+  color: #15364e;
+  background: rgba(255, 255, 255, 0.72);
+  font: inherit;
+  font-size: 0.78rem;
+}
+.categoryChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1.2rem;
+}
+.categoryChips button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid rgba(65, 105, 117, 0.2);
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  color: #15364e;
+  background: rgba(255, 255, 255, 0.55);
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+.categoryChips button[data-active="true"] {
+  color: white;
+  background: #1c6e63;
+  border-color: #1c6e63;
+}
+.categoryChips button span {
+  border-radius: 999px;
+  padding: 0.05rem 0.4rem;
+  background: rgba(0, 0, 0, 0.12);
+  font-size: 0.66rem;
+}
+.addForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1.6rem;
+}
+.addForm input,
+.addForm select {
+  flex: 1 1 10rem;
+  border: 1px solid rgba(65, 105, 117, 0.2);
+  border-radius: 6px;
+  padding: 0.7rem 0.75rem;
+  color: #15364e;
+  background: rgba(255, 255, 255, 0.72);
+  font: inherit;
+  font-size: 0.82rem;
+}
+.addForm button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: none;
+  border-radius: 6px;
+  padding: 0.7rem 1.1rem;
+  color: white;
+  background: #1c6e63;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.addForm button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.error {
+  margin: 0.8rem 0 0;
+  color: #b3352f;
+  font-size: 0.82rem;
+}
+.itemList {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.itemList li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.5);
+}
+.itemList[data-checked] li {
+  opacity: 0.6;
+}
+.itemList label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.88rem;
+}
+.itemList label > span {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+.itemList label strong {
+  color: #15364e;
+}
+.itemList label em {
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  color: #1c6e63;
+  background: rgba(28, 110, 99, 0.12);
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.itemList small {
+  color: #61798b;
+  font-size: 0.72rem;
+}
+.itemMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 5px;
+  padding: 0.35rem;
+  color: #61798b;
+  background: transparent;
+  cursor: pointer;
+}
+.iconButton:hover {
+  color: #15364e;
+  background: rgba(65, 105, 117, 0.12);
+}
+.quantityEdit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.quantityEdit input {
+  width: 7rem;
+  border: 1px solid rgba(65, 105, 117, 0.2);
+  border-radius: 5px;
+  padding: 0.3rem 0.5rem;
+  font: inherit;
+  font-size: 0.78rem;
+}
+.quantityEdit button {
+  border: none;
+  border-radius: 5px;
+  padding: 0.3rem 0.6rem;
+  color: white;
+  background: #1c6e63;
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+.quantityEdit button:last-child {
+  display: inline-flex;
+  color: #61798b;
+  background: transparent;
+  padding: 0.3rem;
+}
+.emptyState {
+  margin: 0.5rem 0 0;
+  color: #61798b;
+  font-size: 0.85rem;
+}

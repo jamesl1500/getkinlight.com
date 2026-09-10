@@ -6,6 +6,10 @@ const memberRole = z.enum(["owner", "member", "caregiver"]);
 
 export const FamilyMutationRequestSchema = z.discriminatedUnion("action", [
   z.object({
+    action: z.literal("create-household"),
+    name: z.string().trim().min(1).max(120),
+  }),
+  z.object({
     action: z.literal("rename-household"),
     householdId: uuid,
     name: z.string().trim().min(1).max(120),
@@ -44,6 +48,7 @@ export const FamilyMutationResponseSchema = z.object({
   ok: z.boolean(),
   message: z.string(),
   invitationToken: z.string().nullable(),
+  householdId: uuid.optional(),
 });
 
 export type FamilyMutationResponse = z.infer<

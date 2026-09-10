@@ -8,15 +8,18 @@ import {
 } from "@/components/ai/ai-assistant-modal";
 import { ConversationPresenceProvider } from "@/components/conversations/conversation-presence-provider";
 import { NotificationCenter } from "@/components/notifications/notification-center";
+import { createBrowserApiClient } from "@/lib/api/client";
 import { createKinlightClient } from "@getkinlight.com/shared";
 import {
   CalendarDays,
   HeartHandshake,
   Home,
+  ListChecks,
   LogOut,
   MessageCircle,
   PanelLeftClose,
   PanelLeftOpen,
+  Package,
   Settings,
   Sparkles,
   SunMedium,
@@ -35,8 +38,10 @@ const PREFERENCES_CHANGED_EVENT = "kinlight-preferences-changed";
 const navigation = [
   { label: "Calendar", icon: CalendarDays, href: "/calendar" },
   { label: "Care", icon: HeartHandshake, href: "/care" },
+  { label: "Tasks", icon: ListChecks, href: "/tasks" },
   { label: "Family", icon: Users, href: "/family" },
   { label: "Messages", icon: MessageCircle, href: "/conversations" },
+  { label: "Supply list", icon: Package, href: "/supply" },
 ];
 
 type AppShellProps = {
@@ -67,6 +72,7 @@ export function AppShell({
     useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [assistantPrompt, setAssistantPrompt] = useState("");
+  const [myTaskCount, setMyTaskCount] = useState(0);
   const initials = displayName
     .split(" ")
     .map((part) => part[0])
@@ -94,6 +100,44 @@ export function AppShell({
     return () =>
       window.removeEventListener(OPEN_KINLIGHT_AI_EVENT, openAssistant);
   }, []);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    async function loadMyTaskCount() {
+      try {
+        const result = await createBrowserApiClient().schedule.getAssignments();
+        if (!isCurrent) return;
+        setMyTaskCount(
+          result.assignments.filter(
+            (assignment) => assignment.assignedTo === userId,
+          ).length,
+        );
+      } catch {
+        if (isCurrent) setMyTaskCount(0);
+      }
+    }
+
+    void loadMyTaskCount();
+    const supabase = createKinlightClient();
+    const channel = supabase
+      .channel(`schedule-task-assignments:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "schedule_task_assignments",
+        },
+        () => void loadMyTaskCount(),
+      )
+      .subscribe();
+
+    return () => {
+      isCurrent = false;
+      void supabase.removeChannel(channel);
+    };
+  }, [userId]);
 
   useEffect(() => {
     function readMotionPreference() {
@@ -198,6 +242,9 @@ export function AppShell({
               >
                 <Icon size={19} aria-hidden />
                 <span className={styles.navText}>{label}</span>
+                {href === "/tasks" && myTaskCount > 0 && (
+                  <span className={styles.navBadge}>{myTaskCount}</span>
+                )}
               </Link>
             ))}
             <button
@@ -216,7 +263,7 @@ export function AppShell({
 
           <div className={styles.sidebarFooter}>
             <Link
-              href="/settings"
+              href="/settings/profile"
               className={`${styles.navItem} ${pathname.startsWith("/settings") ? styles.navItemActive : ""}`}
               title="Settings"
             >
@@ -317,6 +364,9 @@ export function AppShell({
             >
               <Icon size={19} aria-hidden />
               <span>{label}</span>
+              {href === "/tasks" && myTaskCount > 0 && (
+                <span className={styles.mobileNavBadge}>{myTaskCount}</span>
+              )}
             </Link>
           ))}
           <button

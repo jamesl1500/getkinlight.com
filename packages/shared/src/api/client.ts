@@ -8,8 +8,12 @@ import {
 import {
   AuthRequestSchema,
   AuthResponseSchema,
+  DeleteAccountRequestSchema,
+  DeleteAccountResponseSchema,
   type AuthRequest,
   type AuthResponse,
+  type DeleteAccountRequest,
+  type DeleteAccountResponse,
 } from "../schemas/auth";
 import {
   CareScheduleRangeQuerySchema,
@@ -50,6 +54,48 @@ import {
   type OnboardingRequest,
   type OnboardingResponse,
 } from "../schemas/onboarding";
+import {
+  MarkNotificationsReadRequestSchema,
+  MarkNotificationsReadResponseSchema,
+  NotificationDeviceRequestSchema,
+  NotificationDeviceResponseSchema,
+  NotificationListResponseSchema,
+  type MarkNotificationsReadRequest,
+  type MarkNotificationsReadResponse,
+  type NotificationDeviceRequest,
+  type NotificationDeviceResponse,
+  type NotificationListResponse,
+} from "../schemas/notifications";
+import {
+  ClaimScheduleTaskRequestSchema,
+  ClaimScheduleTaskResponseSchema,
+  ScheduleTaskAssignmentListResponseSchema,
+  type ClaimScheduleTaskRequest,
+  type ClaimScheduleTaskResponse,
+  type ScheduleTaskAssignmentListResponse,
+} from "../schemas/schedule-assignment";
+import {
+  CreateSupplyItemRequestSchema,
+  DeleteSupplyItemRequestSchema,
+  DeleteSupplyItemResponseSchema,
+  SupplyItemResponseSchema,
+  SupplyListResponseSchema,
+  ToggleSupplyItemRequestSchema,
+  type CreateSupplyItemRequest,
+  type DeleteSupplyItemRequest,
+  type DeleteSupplyItemResponse,
+  type SupplyItemResponse,
+  type SupplyListResponse,
+  type ToggleSupplyItemRequest,
+} from "../schemas/supply";
+import {
+  ConversationWorkspaceResponseSchema,
+  type ConversationWorkspaceResponse,
+} from "../schemas/conversations";
+import {
+  TaskBoardResponseSchema,
+  type TaskBoardResponse,
+} from "../schemas/tasks";
 
 export const KINLIGHT_API_VERSION = "v1" as const;
 
@@ -98,7 +144,7 @@ export type KinlightApiClientOptions = {
 
 type RequestOptions<Input, Output> = {
   path: string;
-  method: "GET" | "POST" | "PATCH";
+  method: "GET" | "POST" | "PATCH" | "DELETE";
   input?: Input;
   inputSchema?: ZodType<Input>;
   outputSchema: ZodType<Output>;
@@ -223,6 +269,17 @@ export function createKinlightApiClient(
         requiresAuth: false,
       });
     },
+    account: {
+      delete(input: DeleteAccountRequest): Promise<DeleteAccountResponse> {
+        return request({
+          path: "account",
+          method: "PATCH",
+          input,
+          inputSchema: DeleteAccountRequestSchema,
+          outputSchema: DeleteAccountResponseSchema,
+        });
+      },
+    },
     onboarding: {
       get(): Promise<OnboardingResponse> {
         return request({
@@ -261,6 +318,37 @@ export function createKinlightApiClient(
           path,
           method: "GET",
           outputSchema: DashboardResponseSchema,
+        });
+      },
+    },
+    notifications: {
+      get(): Promise<NotificationListResponse> {
+        return request({
+          path: "notifications",
+          method: "GET",
+          outputSchema: NotificationListResponseSchema,
+        });
+      },
+      markRead(
+        input: MarkNotificationsReadRequest,
+      ): Promise<MarkNotificationsReadResponse> {
+        return request({
+          path: "notifications",
+          method: "PATCH",
+          input,
+          inputSchema: MarkNotificationsReadRequestSchema,
+          outputSchema: MarkNotificationsReadResponseSchema,
+        });
+      },
+      updateDevice(
+        input: NotificationDeviceRequest,
+      ): Promise<NotificationDeviceResponse> {
+        return request({
+          path: "notifications/devices",
+          method: "PATCH",
+          input,
+          inputSchema: NotificationDeviceRequestSchema,
+          outputSchema: NotificationDeviceResponseSchema,
         });
       },
     },
@@ -337,6 +425,77 @@ export function createKinlightApiClient(
           outputSchema: UpdateFamilyEventResponseSchema,
         });
       },
+      claimTask(
+        input: ClaimScheduleTaskRequest,
+      ): Promise<ClaimScheduleTaskResponse> {
+        return request({
+          path: "schedule-assignments",
+          method: "POST",
+          input,
+          inputSchema: ClaimScheduleTaskRequestSchema,
+          outputSchema: ClaimScheduleTaskResponseSchema,
+        });
+      },
+      getAssignments(
+        householdId?: string,
+      ): Promise<ScheduleTaskAssignmentListResponse> {
+        const path = householdId
+          ? `schedule-assignments?household=${encodeURIComponent(householdId)}`
+          : "schedule-assignments";
+        return request({
+          path,
+          method: "GET",
+          outputSchema: ScheduleTaskAssignmentListResponseSchema,
+        });
+      },
+    },
+    supply: {
+      get(householdId?: string): Promise<SupplyListResponse> {
+        const path = householdId
+          ? `supply?household=${encodeURIComponent(householdId)}`
+          : "supply";
+        return request({
+          path,
+          method: "GET",
+          outputSchema: SupplyListResponseSchema,
+        });
+      },
+      create(input: CreateSupplyItemRequest): Promise<SupplyItemResponse> {
+        return request({
+          path: "supply",
+          method: "POST",
+          input,
+          inputSchema: CreateSupplyItemRequestSchema,
+          outputSchema: SupplyItemResponseSchema,
+        });
+      },
+      toggle(input: ToggleSupplyItemRequest): Promise<SupplyItemResponse> {
+        return request({
+          path: "supply",
+          method: "PATCH",
+          input,
+          inputSchema: ToggleSupplyItemRequestSchema,
+          outputSchema: SupplyItemResponseSchema,
+        });
+      },
+      update(input: ToggleSupplyItemRequest): Promise<SupplyItemResponse> {
+        return request({
+          path: "supply",
+          method: "PATCH",
+          input,
+          inputSchema: ToggleSupplyItemRequestSchema,
+          outputSchema: SupplyItemResponseSchema,
+        });
+      },
+      remove(input: DeleteSupplyItemRequest): Promise<DeleteSupplyItemResponse> {
+        return request({
+          path: "supply",
+          method: "DELETE",
+          input,
+          inputSchema: DeleteSupplyItemRequestSchema,
+          outputSchema: DeleteSupplyItemResponseSchema,
+        });
+      },
     },
     ai(input: AiRequest): Promise<AiResponse> {
       return request({
@@ -346,6 +505,30 @@ export function createKinlightApiClient(
         inputSchema: AiRequestSchema,
         outputSchema: AiResponseSchema,
       });
+    },
+    conversations: {
+      get(householdId?: string): Promise<ConversationWorkspaceResponse> {
+        const path = householdId
+          ? `conversations?household=${encodeURIComponent(householdId)}`
+          : "conversations";
+        return request({
+          path,
+          method: "GET",
+          outputSchema: ConversationWorkspaceResponseSchema,
+        });
+      },
+    },
+    tasks: {
+      get(householdId?: string): Promise<TaskBoardResponse> {
+        const path = householdId
+          ? `tasks?household=${encodeURIComponent(householdId)}`
+          : "tasks";
+        return request({
+          path,
+          method: "GET",
+          outputSchema: TaskBoardResponseSchema,
+        });
+      },
     },
   };
 }

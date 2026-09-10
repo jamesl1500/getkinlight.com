@@ -5,6 +5,7 @@ import { createBrowserApiClient } from "@/lib/api/client";
 import type { CareScheduleItem } from "@/lib/care-schedule";
 import {
   type CreateCareScheduleRequest,
+  type ScheduleTaskAssignment,
   type UpdateFamilyEventRequest,
 } from "@getkinlight.com/shared";
 import { CalendarDays, Clock3, Pencil, Plus, UserRound, X } from "lucide-react";
@@ -28,6 +29,8 @@ type CalendarBoardProps = {
   initialItems: CareScheduleItem[];
   households: CalendarHousehold[];
   recipients: CalendarRecipient[];
+  currentUserId: string;
+  initialAssignments: ScheduleTaskAssignment[];
 };
 
 const typeOptions = [
@@ -46,6 +49,10 @@ function readableDate(date: string) {
   }).format(new Date(`${date}T00:00:00Z`));
 }
 
+function assignmentKey(kind: string, sourceId: string) {
+  return `${kind}:${sourceId}`;
+}
+
 export function CalendarBoard({
   days,
   month,
@@ -54,6 +61,8 @@ export function CalendarBoard({
   initialItems,
   households,
   recipients,
+  currentUserId,
+  initialAssignments,
 }: CalendarBoardProps) {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(initialSelectedDate);
@@ -61,6 +70,14 @@ export function CalendarBoard({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CareScheduleItem | null>(
     null,
+  );
+  const [assignments, setAssignments] = useState(
+    new Map(
+      initialAssignments.map((assignment) => [
+        assignmentKey(assignment.resourceType, assignment.resourceId),
+        assignment,
+      ]),
+    ),
   );
 
   const itemsByDay = Map.groupBy(items, (item) => item.startsAt.slice(0, 10));
@@ -166,7 +183,22 @@ export function CalendarBoard({
         <ScheduleDetailModal
           item={selectedItem}
           recipients={recipients}
+          assignment={
+            assignments.get(
+              assignmentKey(selectedItem.kind, selectedItem.sourceId),
+            ) ?? null
+          }
+          currentUserId={currentUserId}
           onClose={() => setSelectedItem(null)}
+          onAssignmentChanged={(assignment) => {
+            setAssignments((current) => {
+              const next = new Map(current);
+              const key = assignmentKey(selectedItem.kind, selectedItem.sourceId);
+              if (assignment) next.set(key, assignment);
+              else next.delete(key);
+              return next;
+            });
+          }}
           onUpdated={(updatedItem) => {
             setItems((current) =>
               current
@@ -200,15 +232,23 @@ const kindLabels = {
 function ScheduleDetailModal({
   item,
   recipients,
+  assignment,
+  currentUserId,
   onClose,
   onUpdated,
+  onAssignmentChanged,
 }: {
   item: CareScheduleItem;
   recipients: CalendarRecipient[];
+  assignment: ScheduleTaskAssignment | null;
+  currentUserId: string;
   onClose: () => void;
   onUpdated: (item: CareScheduleItem) => void;
+  onAssignmentChanged: (assignment: ScheduleTaskAssignment | null) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
+  const [claimError, setClaimError] = useState("");
   useEffect(() => {
     function closeOnEscape(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
@@ -246,6 +286,31 @@ function ScheduleDetailModal({
         }}
       />
     );
+  }
+
+  const isClaimedByMe = assignment?.assignedTo === currentUserId;
+
+  async function toggleClaim() {
+    setClaimError("");
+    setIsClaiming(true);
+    try {
+      const result = await createBrowserApiClient().schedule.claimTask({
+        action: assignment ? "unclaim" : "claim",
+        householdId: item.householdId,
+        resourceType: item.kind,
+        resourceId: item.sourceId,
+      });
+      if (!result.ok) throw new Error(result.message);
+      onAssignmentChanged(result.assignment);
+    } catch (toggleError) {
+      setClaimError(
+        toggleError instanceof Error
+          ? toggleError.message
+          : "Unable to update this claim.",
+      );
+    } finally {
+      setIsClaiming(false);
+    }
   }
 
   return createPortal(
@@ -293,6 +358,20 @@ function ScheduleDetailModal({
             </span>
           </div>
         </div>
+        <div className={styles.detailSummary}>
+          <div>
+            <UserRound size={17} aria-hidden />
+            <span>
+              <strong>Assigned to</strong>
+              {assignment ? (assignment.assignedToName ?? "A family member") : "Unclaimed"}
+            </span>
+          </div>
+        </div>
+        {claimError && (
+          <p className={styles.error} role="alert">
+            {claimError}
+          </p>
+        )}
         <dl className={styles.detailList}>
           {details
             .filter((detail) => detail.label !== "Care recipient")
@@ -304,6 +383,20 @@ function ScheduleDetailModal({
             ))}
         </dl>
         <footer className={styles.detailFooter}>
+          {(!assignment || isClaimedByMe) && (
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={toggleClaim}
+              disabled={isClaiming}
+            >
+              {isClaiming
+                ? "Saving..."
+                : assignment
+                  ? "Unclaim"
+                  : "Claim this task"}
+            </button>
+          )}
           {item.kind === "event" && item.sourceId && item.householdId && (
             <button
               type="button"

@@ -25,7 +25,8 @@ function utcDateTime(date: string, time: string) {
 
 function parseDate(value: string) {
   const date = new Date(`${value}T00:00:00.000Z`);
-  return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value
+  return Number.isNaN(date.getTime()) ||
+    date.toISOString().slice(0, 10) !== value
     ? null
     : date;
 }
@@ -46,7 +47,8 @@ export async function GET(request: Request) {
   });
   const start = query.success ? parseDate(query.data.start) : null;
   const end = query.success ? parseDate(query.data.end) : null;
-  const rangeDays = start && end ? (end.getTime() - start.getTime()) / DAY_MS : 0;
+  const rangeDays =
+    start && end ? (end.getTime() - start.getTime()) / DAY_MS : 0;
   if (!query.success || !start || !end || rangeDays < 1 || rangeDays > 42) {
     return NextResponse.json(
       {

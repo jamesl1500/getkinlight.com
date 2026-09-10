@@ -9,11 +9,13 @@ import {
 } from "react";
 import {
   ActivityIndicator,
+  Linking,
   Platform,
   Pressable,
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   View,
 } from "react-native";
 
@@ -28,6 +30,14 @@ import {
 } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { createMobileApiClient } from "@/lib/api";
+import {
+  applyMobileObservabilityConsent,
+  MOBILE_PREFERENCES_KEY,
+} from "@/lib/observability";
+import {
+  disablePushNotifications,
+  enablePushNotifications,
+} from "@/lib/push-notifications";
 import { useAuth } from "@/providers/auth-provider";
 
 type ColorsValue = (typeof Colors)[keyof typeof Colors];
@@ -37,21 +47,32 @@ type Preferences = {
   timeFormat: "12-hour" | "24-hour";
   compactSchedule: boolean;
   reduceMotion: boolean;
+  analytics: boolean;
+  crashReporting: boolean;
+  pushNotifications: boolean;
+  careUpdatesEnabled: boolean;
+  scheduleRemindersEnabled: boolean;
+  invitationsEnabled: boolean;
 };
 
-const STORAGE_KEY = "kinlight-mobile-preferences";
 const defaults: Preferences = {
   weekStartsOn: "sunday",
   timeFormat: "12-hour",
   compactSchedule: false,
   reduceMotion: false,
+  analytics: false,
+  crashReporting: false,
+  pushNotifications: false,
+  careUpdatesEnabled: true,
+  scheduleRemindersEnabled: true,
+  invitationsEnabled: true,
 };
 
 async function readPreferences() {
   const value =
     Platform.OS === "web"
-      ? globalThis.localStorage?.getItem(STORAGE_KEY)
-      : await SecureStore.getItemAsync(STORAGE_KEY);
+      ? globalThis.localStorage?.getItem(MOBILE_PREFERENCES_KEY)
+      : await SecureStore.getItemAsync(MOBILE_PREFERENCES_KEY);
   if (!value) return defaults;
   try {
     return { ...defaults, ...(JSON.parse(value) as Partial<Preferences>) };
@@ -63,8 +84,8 @@ async function readPreferences() {
 async function writePreferences(preferences: Preferences) {
   const value = JSON.stringify(preferences);
   if (Platform.OS === "web")
-    globalThis.localStorage?.setItem(STORAGE_KEY, value);
-  else await SecureStore.setItemAsync(STORAGE_KEY, value);
+    globalThis.localStorage?.setItem(MOBILE_PREFERENCES_KEY, value);
+  else await SecureStore.setItemAsync(MOBILE_PREFERENCES_KEY, value);
 }
 
 function errorMessage(error: unknown) {
@@ -83,6 +104,8 @@ export function SettingsWorkspace() {
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deletionConfirmation, setDeletionConfirmation] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -122,8 +145,15 @@ export function SettingsWorkspace() {
   async function savePreferences() {
     setSaving(true);
     setNotice(null);
+    setError(null);
     try {
+      if (preferences.pushNotifications) {
+        await enablePushNotifications(preferences);
+      } else {
+        await disablePushNotifications();
+      }
       await writePreferences(preferences);
+      await applyMobileObservabilityConsent(preferences);
       setNotice("Preferences saved on this device.");
     } catch {
       setError("Your device preferences could not be saved.");
@@ -136,10 +166,30 @@ export function SettingsWorkspace() {
     setSigningOut(true);
     setError(null);
     try {
+      await disablePushNotifications();
       await signOut();
     } catch (signOutError) {
       setError(errorMessage(signOutError));
       setSigningOut(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    if (deletionConfirmation !== "DELETE") return;
+    setDeletingAccount(true);
+    setError(null);
+    try {
+      await disablePushNotifications();
+      await createMobileApiClient().account.delete({ confirmation: "DELETE" });
+      if (Platform.OS === "web") {
+        globalThis.localStorage?.removeItem(MOBILE_PREFERENCES_KEY);
+      } else {
+        await SecureStore.deleteItemAsync(MOBILE_PREFERENCES_KEY);
+      }
+      await signOut().catch(() => {});
+    } catch (deleteError) {
+      setError(errorMessage(deleteError));
+      setDeletingAccount(false);
     }
   }
 
@@ -305,6 +355,79 @@ export function SettingsWorkspace() {
           </SettingsSection>
 
           <SettingsSection
+            title="Notifications"
+            subtitle="This device"
+            icon="notifications-none"
+            colors={colors}
+          >
+            <ToggleSetting
+              label="Push notifications"
+              description="Receive household updates when Kinlight is closed."
+              value={preferences.pushNotifications}
+              onChange={(value) =>
+                setPreferences({ ...preferences, pushNotifications: value })
+              }
+              colors={colors}
+            />
+            <ToggleSetting
+              label="Care updates"
+              description="Notes, check-ins, and changes to care details."
+              value={preferences.careUpdatesEnabled}
+              onChange={(value) =>
+                setPreferences({ ...preferences, careUpdatesEnabled: value })
+              }
+              colors={colors}
+            />
+            <ToggleSetting
+              label="Schedule reminders"
+              description="Appointments, events, meals, and medication reminders."
+              value={preferences.scheduleRemindersEnabled}
+              onChange={(value) =>
+                setPreferences({
+                  ...preferences,
+                  scheduleRemindersEnabled: value,
+                })
+              }
+              colors={colors}
+            />
+            <ToggleSetting
+              label="Invitations and members"
+              description="Household invitations and membership changes."
+              value={preferences.invitationsEnabled}
+              onChange={(value) =>
+                setPreferences({ ...preferences, invitationsEnabled: value })
+              }
+              colors={colors}
+            />
+          </SettingsSection>
+
+          <SettingsSection
+            title="Privacy"
+            subtitle="Optional diagnostics"
+            icon="privacy-tip"
+            colors={colors}
+          >
+            <ToggleSetting
+              label="Anonymous product analytics"
+              description="Share allowlisted feature events without identity, care details, or screen recording."
+              value={preferences.analytics}
+              onChange={(value) =>
+                setPreferences({ ...preferences, analytics: value })
+              }
+              colors={colors}
+            />
+            <ToggleSetting
+              label="Technical crash reports"
+              description="Share scrubbed errors without request contents, tokens, or household information."
+              value={preferences.crashReporting}
+              onChange={(value) =>
+                setPreferences({ ...preferences, crashReporting: value })
+              }
+              colors={colors}
+            />
+          </SettingsSection>
+
+          <SettingsSection
             title="Security"
             subtitle="Private account access"
             icon="lock-outline"
@@ -360,6 +483,101 @@ export function SettingsWorkspace() {
               colors={colors}
             />
           </SettingsSection>
+
+          <SettingsSection
+            title="About Kinlight"
+            subtitle="Policies and support"
+            icon="info-outline"
+            colors={colors}
+          >
+            <SettingsLink
+              icon="privacy-tip"
+              label="Privacy Notice"
+              url="https://getkinlight.com/privacy"
+              colors={colors}
+            />
+            <SettingsLink
+              icon="gavel"
+              label="Terms of Use"
+              url="https://getkinlight.com/terms"
+              colors={colors}
+            />
+            <SettingsLink
+              icon="support-agent"
+              label="Contact support"
+              url="mailto:support@getkinlight.com"
+              colors={colors}
+            />
+          </SettingsSection>
+
+          <View
+            style={[
+              styles.dangerZone,
+              {
+                backgroundColor: colors.dangerSurface,
+                borderColor: colors.danger,
+              },
+            ]}
+          >
+            <View style={styles.dangerCopy}>
+              <Text style={[styles.sectionTitle, { color: colors.danger }]}>
+                Delete account
+              </Text>
+              <Text style={[styles.meta, { color: colors.textMuted }]}>
+                Permanently delete your profile and one-person households.
+                Transfer ownership first if others share a household you own.
+              </Text>
+            </View>
+            <TextInput
+              accessibilityLabel="Type DELETE to confirm account deletion"
+              autoCapitalize="characters"
+              autoCorrect={false}
+              placeholder="Type DELETE to confirm"
+              placeholderTextColor={colors.icon}
+              value={deletionConfirmation}
+              onChangeText={setDeletionConfirmation}
+              style={[
+                styles.dangerInput,
+                {
+                  color: colors.text,
+                  backgroundColor: colors.glassStrong,
+                  borderColor: colors.danger,
+                },
+              ]}
+            />
+            <Pressable
+              accessibilityRole="button"
+              disabled={deletionConfirmation !== "DELETE" || deletingAccount}
+              onPress={() => void handleDeleteAccount()}
+              style={({ pressed }) => [
+                styles.deleteButton,
+                {
+                  backgroundColor: colors.danger,
+                  opacity:
+                    pressed ||
+                    deletingAccount ||
+                    deletionConfirmation !== "DELETE"
+                      ? 0.55
+                      : 1,
+                },
+              ]}
+            >
+              {deletingAccount ? (
+                <ActivityIndicator color={Palette.white} />
+              ) : (
+                <>
+                  <MaterialIcons
+                    name="delete-forever"
+                    size={20}
+                    color={Palette.white}
+                  />
+                  <Text style={[styles.signOutText, { color: Palette.white }]}>
+                    Delete account permanently
+                  </Text>
+                </>
+              )}
+            </Pressable>
+          </View>
 
           <Pressable
             accessibilityRole="button"
@@ -544,6 +762,34 @@ function Fact({
   );
 }
 
+function SettingsLink({
+  icon,
+  label,
+  url,
+  colors,
+}: {
+  icon: IconName;
+  label: string;
+  url: string;
+  colors: ColorsValue;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="link"
+      accessibilityLabel={label}
+      onPress={() => void Linking.openURL(url)}
+      style={({ pressed }) => [
+        styles.linkRow,
+        { borderBottomColor: colors.border, opacity: pressed ? 0.6 : 1 },
+      ]}
+    >
+      <MaterialIcons name={icon} size={20} color={colors.primary} />
+      <Text style={[styles.linkLabel, { color: colors.text }]}>{label}</Text>
+      <MaterialIcons name="open-in-new" size={18} color={colors.icon} />
+    </Pressable>
+  );
+}
+
 function Notice({
   text,
   danger,
@@ -673,6 +919,38 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
     padding: Spacing.lg,
+  },
+  linkRow: {
+    minHeight: 60,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: Spacing.lg,
+  },
+  linkLabel: { ...Type.label, flex: 1 },
+  dangerZone: {
+    gap: Spacing.md,
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+  },
+  dangerCopy: { gap: Spacing.xs },
+  dangerInput: {
+    minHeight: 48,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    ...Type.body,
+  },
+  deleteButton: {
+    minHeight: 50,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.sm,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
   },
   signOut: {
     minHeight: 52,

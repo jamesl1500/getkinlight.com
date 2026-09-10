@@ -1,89 +1,119 @@
-import Link from "next/link";
-import styles from "../../styles/ui.module.scss";
+import type { Metadata } from "next";
+import {
+  Bell,
+  CalendarDays,
+  ClipboardList,
+  Heart,
+  Lock,
+  MessageCircle,
+  Package,
+  Sparkles,
+  UsersRound,
+} from "lucide-react";
+
+import { CtaBand } from "@/components/marketing/cta-band";
+import { MarketingPage } from "@/components/marketing/decor";
+import styles from "@/styles/pages/marketing/marketing.module.scss";
+
+export const metadata: Metadata = {
+  title: "Features",
+  description:
+    "The care timeline, shared schedule, tasks, supply list, household messages, and an optional AI brief — all in one private family space.",
+};
 
 const features = [
   {
-    accent: "FT",
-    delay: "reveal-delay-1",
-    title: "Family timeline",
-    body: "Post updates with context so relatives and caregivers stay in sync without repeated calls.",
+    icon: Heart,
+    title: "Care timeline",
+    body: "Post check-ins, medications, moods, and notes with context, so relatives and caregivers stay in sync without repeated calls.",
   },
   {
-    accent: "RT",
-    delay: "reveal-delay-2",
-    title: "Care routines",
-    body: "Track recurring tasks and milestones with clear ownership and history.",
+    icon: CalendarDays,
+    title: "Shared schedule",
+    body: "Appointments, visits, and recurring routines in one calendar the whole household keeps current.",
   },
   {
-    accent: "HR",
-    delay: "reveal-delay-3",
-    title: "Household roles",
-    body: "Control who can invite members or edit records with owner and caregiver permissions.",
+    icon: ClipboardList,
+    title: "Tasks with owners",
+    body: "Assign the pharmacy run or the weekly call, track what's done, and see what's still open at a glance.",
   },
   {
-    accent: "PD",
-    delay: "reveal-delay-4",
+    icon: Package,
+    title: "Supply list",
+    body: "Know what's running low and who is picking it up — from medical supplies to the small comforts that matter.",
+  },
+  {
+    icon: MessageCircle,
+    title: "Household messages",
+    body: "A calm channel for the small updates that don't belong in a formal note but everyone should see.",
+  },
+  {
+    icon: Sparkles,
+    title: "Kinlight AI brief",
+    body: "An optional daily summary that turns the week's updates into a few plain sentences. Opt-in, always yours to review.",
+  },
+  {
+    icon: UsersRound,
+    title: "Roles & permissions",
+    body: "Owner, caregiver, and family-member access so help fits the person — bring in a neighbour without oversharing.",
+  },
+  {
+    icon: Lock,
     title: "Private by design",
-    body: "Every household is scoped by row-level security so members only see their own family data.",
+    body: "Every household is isolated with row-level security. Members only ever see their own family's data.",
   },
   {
-    accent: "GN",
-    delay: "reveal-delay-5",
+    icon: Bell,
     title: "Gentle notifications",
-    body: "Nudges for what matters most, with fewer noisy pings and better timing.",
-  },
-  {
-    accent: "SA",
-    delay: "reveal-delay-6",
-    title: "Supabase-backed auth",
-    body: "Reliable sign-in, password recovery, and profile bootstrapping from a secure auth stack.",
+    body: "Nudges for what matters most, with fewer noisy pings and better timing. Nothing that manufactures urgency.",
   },
 ];
 
 export default function FeaturesPage() {
   return (
-    <div className={styles.pageStack}>
-      <main
-        className={`${styles.pageContainer} mt-6 space-y-5 md:mt-8 md:space-y-8`}
-      >
-        <section className={`${styles.glassCard} ${styles.heroPanel}`}>
-          <div className={`${styles.heroCopy} ${styles.fadeUp}`}>
-            <p className={styles.heroPill}>Features</p>
-            <h1 className={styles.sectionTitle}>
-              Purpose-built for caring families
-            </h1>
-            <p className={styles.sectionCopy}>
-              Kinlight keeps support practical and warm. You get structure for
-              important information, while your family gets an interface that
-              feels easy and human.
-            </p>
-          </div>
-        </section>
+    <MarketingPage>
+      <section className={styles.hero} style={{ gridTemplateColumns: "1fr" }}>
+        <div className={`${styles.heroCopy} ${styles.reveal}`}>
+          <p className={styles.eyebrow}>
+            <span className={styles.eyebrowDot} aria-hidden />
+            Features
+          </p>
+          <h1 className={styles.display}>Purpose-built for caring families</h1>
+          <p className={styles.lead}>
+            Kinlight keeps support practical and warm. You get structure for the
+            important information, while your family gets an interface that
+            feels easy and human.
+          </p>
+        </div>
+      </section>
 
-        <section className={styles.featureGrid}>
-          {features.map((feature) => (
-            <article
-              key={feature.title}
-              className={`${styles.glassCard} ${styles.featureCard} ${styles.fadeUp} ${styles[feature.delay as keyof typeof styles]}`}
-            >
-              <span className={styles.iconAccent}>{feature.accent}</span>
-              <h2 className={styles.cardTitle}>{feature.title}</h2>
-              <p className={styles.cardCopy}>{feature.body}</p>
-            </article>
-          ))}
-        </section>
+      <section>
+        <div className={`${styles.grid} ${styles.grid3}`}>
+          {features.map((feature, i) => {
+            const Icon = feature.icon;
+            return (
+              <article
+                key={feature.title}
+                className={`${styles.card} ${styles.tile} ${styles.reveal} ${
+                  styles[`d${(i % 3) + 1}` as keyof typeof styles]
+                }`}
+              >
+                <span className={styles.tileIcon} aria-hidden>
+                  <Icon size={22} aria-hidden />
+                </span>
+                <h2 className={styles.cardTitle}>{feature.title}</h2>
+                <p className={styles.tileBody}>{feature.body}</p>
+              </article>
+            );
+          })}
+        </div>
+      </section>
 
-        <section className={`${styles.glassCard} ${styles.ctaPanel}`}>
-          <div className={styles.ctaActions}>
-            <h2 className={styles.sectionTitle}>
-              See it in your own household
-            </h2>
-            <Link href="/auth/sign-up" className={styles.buttonPrimary}>
-              Start now
-            </Link>
-          </div>
-        </section>
-      </main>
-    </div>
+      <CtaBand
+        eyebrow="See it live"
+        title="See it in your own household"
+        body="Create a free account, set up a household, and invite one other person. The difference shows up within a day."
+      />
+    </MarketingPage>
   );
 }
