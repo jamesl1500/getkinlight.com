@@ -11,8 +11,24 @@ const pages = [
     heading: "Purpose-built for caring families",
   },
   {
+    path: "/how-it-works",
+    heading: "From scattered threads to one shared rhythm",
+  },
+  {
     path: "/pricing",
     heading: "Simple plans for real life",
+  },
+  {
+    path: "/about",
+    heading: "We built the tool we wished our own families had",
+  },
+  {
+    path: "/faq",
+    heading: "Answers before you sign up",
+  },
+  {
+    path: "/contact",
+    heading: "Talk to a real person",
   },
 ] as const;
 
@@ -26,7 +42,7 @@ for (const page of pages) {
       browserPage.getByRole("heading", { level: 1, name: page.heading }),
     ).toBeVisible();
     await expect(
-      browserPage.getByRole("link", { name: "Kinlight" }),
+      browserPage.getByRole("link", { name: "Kinlight", exact: true }).first(),
     ).toBeVisible();
 
     const horizontalOverflow = await browserPage.evaluate(

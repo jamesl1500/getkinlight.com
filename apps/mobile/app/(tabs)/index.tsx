@@ -4,7 +4,7 @@ import type {
   DashboardCareUpdate,
   DashboardResponse,
 } from "@getkinlight.com/shared";
-import { useRouter } from "expo-router";
+import { type Href, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -95,20 +95,40 @@ export default function HomeScreen() {
       refreshing={refreshing}
       onRefresh={refresh}
       action={
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Open settings"
-          onPress={() => router.push("/(tabs)/settings")}
-          style={[
-            styles.settingsButton,
-            {
-              backgroundColor: colors.glassStrong,
-              borderColor: colors.glassBorder,
-            },
-          ]}
-        >
-          <MaterialIcons name="settings" size={22} color={colors.primary} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open notifications"
+            onPress={() => router.push("/notifications" as Href)}
+            style={[
+              styles.settingsButton,
+              {
+                backgroundColor: colors.glassStrong,
+                borderColor: colors.glassBorder,
+              },
+            ]}
+          >
+            <MaterialIcons
+              name="notifications-none"
+              size={22}
+              color={colors.primary}
+            />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open settings"
+            onPress={() => router.push("/(tabs)/settings")}
+            style={[
+              styles.settingsButton,
+              {
+                backgroundColor: colors.glassStrong,
+                borderColor: colors.glassBorder,
+              },
+            ]}
+          >
+            <MaterialIcons name="settings" size={22} color={colors.primary} />
+          </Pressable>
+        </View>
       }
     >
       {loading ? (
@@ -393,6 +413,10 @@ function EmptyRow({
 }
 
 const styles = StyleSheet.create({
+  headerActions: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
   settingsButton: {
     width: 44,
     height: 44,

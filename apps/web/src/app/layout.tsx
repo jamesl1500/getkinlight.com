@@ -3,6 +3,7 @@ import { Fraunces, Manrope } from "next/font/google";
 import "./globals.scss";
 import styles from "../styles/ui.module.scss";
 
+import { ObservabilityProvider } from "@/components/observability/observability-provider";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 
@@ -36,6 +37,7 @@ export default function RootLayout({
       className={`${headline.variable} ${body.variable} h-full antialiased`}
     >
       <body className={`${styles.body} min-h-full`}>
+        <ObservabilityProvider />
         <SiteHeader />
         {children}
         <SiteFooter />

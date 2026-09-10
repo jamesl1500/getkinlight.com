@@ -1,5 +1,6 @@
 import { CalendarBoard } from "@/components/calendar/calendar-board";
 import { getCareScheduleForRange } from "@/lib/care-schedule";
+import { getScheduleAssignments } from "@/lib/schedule-assignments";
 import { createKinlightServerComponentClient } from "@/lib/supabase/server";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
@@ -65,6 +66,13 @@ export default async function CalendarPage({
     householdId: recipient.household_id,
     name: recipient.preferred_name ?? recipient.first_name,
   }));
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const assignments = await getScheduleAssignments(
+    households.map((household) => household.id),
+    supabase,
+  );
   const previousMonth = new Date(monthStart);
   previousMonth.setUTCMonth(previousMonth.getUTCMonth() - 1);
   const nextMonth = new Date(monthStart);
@@ -115,6 +123,8 @@ export default async function CalendarPage({
         initialItems={schedule}
         households={households}
         recipients={recipients}
+        currentUserId={user?.id ?? ""}
+        initialAssignments={assignments}
       />
     </main>
   );

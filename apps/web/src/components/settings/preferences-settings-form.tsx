@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  readObservabilityConsent,
+  writeObservabilityConsent,
+  type ObservabilityConsent,
+} from "@/lib/observability";
 import { Check, MonitorCog } from "lucide-react";
 import { useEffect, useState } from "react";
 import styles from "./settings.module.scss";
@@ -23,12 +28,17 @@ const defaults: DevicePreferences = {
 
 export function PreferencesSettingsForm() {
   const [preferences, setPreferences] = useState(defaults);
+  const [observability, setObservability] = useState<ObservabilityConsent>({
+    analytics: false,
+    crashReporting: false,
+  });
   const [isReady, setIsReady] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
       const stored = window.localStorage.getItem(PREFERENCES_KEY);
+      setObservability(readObservabilityConsent());
       if (stored) {
         try {
           setPreferences({
@@ -48,6 +58,7 @@ export function PreferencesSettingsForm() {
   function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     window.localStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences));
+    writeObservabilityConsent(observability);
     window.dispatchEvent(new Event(PREFERENCES_CHANGED_EVENT));
     setSaved(true);
   }
@@ -121,6 +132,46 @@ export function PreferencesSettingsForm() {
         <span>
           <strong>Reduce interface motion</strong>
           <small>Prefer simpler transitions and fewer animated effects.</small>
+        </span>
+      </label>
+      <label className={styles.checkboxField}>
+        <input
+          type="checkbox"
+          checked={observability.analytics}
+          onChange={(event) =>
+            setObservability({
+              ...observability,
+              analytics: event.target.checked,
+            })
+          }
+          disabled={!isReady}
+        />
+        <span>
+          <strong>Share anonymous product analytics</strong>
+          <small>
+            Send a small set of feature events without names, email addresses,
+            care details, page recording, or automatic click tracking.
+          </small>
+        </span>
+      </label>
+      <label className={styles.checkboxField}>
+        <input
+          type="checkbox"
+          checked={observability.crashReporting}
+          onChange={(event) =>
+            setObservability({
+              ...observability,
+              crashReporting: event.target.checked,
+            })
+          }
+          disabled={!isReady}
+        />
+        <span>
+          <strong>Share technical crash reports</strong>
+          <small>
+            Send scrubbed error diagnostics without your identity, request
+            contents, tokens, or household care information.
+          </small>
         </span>
       </label>
       <aside className={styles.infoNote}>

@@ -155,6 +155,22 @@ button.navItem:disabled {
     inset 0 1px 0 white;
 }
 
+.navBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  margin-left: auto;
+  padding: 0 0.32rem;
+  border-radius: 999px;
+  color: white;
+  background: #c65a3a;
+  font-size: 0.64rem;
+  font-weight: 780;
+  line-height: 1;
+}
+
 .sidebarFooter {
   margin-top: auto;
   display: grid;
@@ -408,6 +424,25 @@ button.navItem:disabled {
     font: inherit;
     font-size: 0.58rem;
     font-weight: 650;
+    position: relative;
+  }
+
+  .mobileNavBadge {
+    position: absolute;
+    top: 0.3rem;
+    right: 22%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0.95rem;
+    height: 0.95rem;
+    padding: 0 0.24rem;
+    border-radius: 999px;
+    color: white;
+    background: #c65a3a;
+    font-size: 0.54rem;
+    font-weight: 780;
+    line-height: 1;
   }
 
   .mobileNavItem:disabled {

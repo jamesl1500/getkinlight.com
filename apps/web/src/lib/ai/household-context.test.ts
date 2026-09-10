@@ -45,6 +45,13 @@ describe("getHouseholdAiContext", () => {
   it("defaults nullable collections to empty arrays", async () => {
     const { client } = createSupabaseMock({
       households: { data: { id: "household-1" }, error: null },
+      care_recipients: { data: null, error: null },
+      household_events: { data: null, error: null },
+      appointments: { data: null, error: null },
+      medication_reminders: { data: null, error: null },
+      eating_reminders: { data: null, error: null },
+      household_check_ins: { data: null, error: null },
+      household_notes: { data: null, error: null },
     });
     const context = await getHouseholdAiContext(client as never, "household-1");
     expect(context.recipients).toEqual([]);
@@ -54,6 +61,8 @@ describe("getHouseholdAiContext", () => {
       medications: [],
       meals: [],
     });
+    expect(context.checkIns).toEqual([]);
+    expect(context.notes).toEqual([]);
   });
 
   it("throws household and related-query errors", async () => {
@@ -73,5 +82,25 @@ describe("getHouseholdAiContext", () => {
     await expect(
       getHouseholdAiContext(relatedClient as never, "household-1"),
     ).rejects.toBe(relatedError);
+  });
+
+  it("throws when an earlier related query fails first", async () => {
+    const recipientsError = new Error("recipients denied");
+    const client = createSupabaseMock({
+      households: { data: { id: "household-1" }, error: null },
+      care_recipients: { data: null, error: recipientsError },
+    }).client;
+    await expect(
+      getHouseholdAiContext(client as never, "household-1"),
+    ).rejects.toBe(recipientsError);
+
+    const eventsError = new Error("events denied");
+    const eventsClient = createSupabaseMock({
+      households: { data: { id: "household-1" }, error: null },
+      household_events: { data: null, error: eventsError },
+    }).client;
+    await expect(
+      getHouseholdAiContext(eventsClient as never, "household-1"),
+    ).rejects.toBe(eventsError);
   });
 });

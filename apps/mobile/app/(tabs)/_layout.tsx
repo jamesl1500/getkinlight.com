@@ -104,6 +104,37 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="messages"
+        options={{
+          title: "Messages",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol
+              size={24}
+              name="bubble.left.and.bubble.right.fill"
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="tasks"
+        options={{
+          title: "Tasks",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={24} name="checklist" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="supply"
+        options={{
+          title: "Supply",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={24} name="shippingbox.fill" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="ai"
         options={{
           title: "AI",
@@ -120,6 +151,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <IconSymbol size={24} name="gearshape.fill" color={color} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: "Notifications",
+          href: null,
         }}
       />
     </Tabs>
